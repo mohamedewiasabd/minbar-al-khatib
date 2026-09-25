@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /sermons/{sermonId} {
+      // All visitors and admin can read sermons and series
+      allow read: if true;
+
+      // Only authenticated admin can create or delete sermons
+      allow create, delete: if request.auth != null;
+
+      // Admin can update all fields; visitors can only increment views/downloads stats
+      allow update: if request.auth != null || 
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['downloadsCount', 'viewsCount']));
+    }
+
+    // تطبيقاتنا: يقرؤها الجميع، ولا يكتب فيها إلا مسؤول المنبر (Admin)
+    match /apps/{appId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null
+        && request.auth.token.email == 'cafnews6@gmail.com';
+    }
+
+    // Accounts & points per signed-in user (only the owner can read/write)
+    // Owners may delete their own account data (required by Google Play policy)
+    match /users/{userId} {
+      allow read, create, update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if request.auth != null && request.auth.uid == userId;
+
+      match /transactions/{transactionId} {
+        allow read, create: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+        allow update: if false;
+      }
+    }
+  }
+}
+

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="ice" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#dcefe6"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffe9a3"/>
+      <stop offset="100%" stop-color="#e0a83f"/>
+    </linearGradient>
+    <linearGradient id="archLine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#35d9a2"/>
+      <stop offset="100%" stop-color="#0e8e63"/>
+    </linearGradient>
+    <mask id="crescentMask">
+      <rect width="1024" height="1024" fill="white"/>
+      <circle cx="552" cy="270" r="38" fill="black"/>
+    </mask>
+  </defs>
+
+  <!-- mihrab arch -->
+  <path d="M350 740 V540 C350 430 414 370 512 370 C610 370 674 430 674 540 V740 Z"
+        fill="none" stroke="url(#archLine)" stroke-width="26" stroke-linecap="round" opacity="0.95"/>
+  <path d="M384 740 V545 C384 445 442 392 512 392 C582 392 640 445 640 545 V740 Z"
+        fill="rgba(5,42,30,0.75)" stroke="none"/>
+
+  <!-- open book -->
+  <g>
+    <path d="M512 592 C462 580 408 580 360 598 L384 696 C424 686 472 686 512 696 Z" fill="url(#ice)"/>
+    <path d="M512 592 C562 580 616 580 664 598 L640 696 C600 686 552 686 512 696 Z" fill="url(#ice)"/>
+    <line x1="512" y1="594" x2="512" y2="694" stroke="#b6cdc1" stroke-width="10" stroke-linecap="round"/>
+    <rect x="500" y="600" width="24" height="78" rx="7" fill="url(#gold)"/>
+  </g>
+
+  <!-- pulpit steps -->
+  <g>
+    <rect x="368" y="776" width="288" height="42" rx="12" fill="url(#gold)"/>
+    <rect x="392" y="734" width="240" height="42" rx="12" fill="url(#gold)"/>
+    <rect x="416" y="692" width="192" height="42" rx="12" fill="url(#gold)"/>
+  </g>
+
+  <!-- crescent -->
+  <circle cx="512" cy="290" r="52" fill="#ffe9a3" mask="url(#crescentMask)"/>
+  <!-- star -->
+  <path d="M594 246 C598 266 602 270 622 274 C602 278 598 282 594 302 C590 282 586 278 566 274 C586 270 590 266 594 246 Z" fill="#ffe9a3"/>
+</svg>

@@ -1,0 +1,7 @@
+{
+  "name": "مولد خطب الجمعة الذكي",
+  "description": "منصة ذكية متكاملة لتحويل الموضوعات والملفات والكتب إلى خطب جمعة وسلاسل خطبية بلاغية مؤثرة مع اقتباسات القرآن والسنة والتحرير والتصدير والحفظ السحابي.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

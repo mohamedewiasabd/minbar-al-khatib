@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">منبر الخطيب</string>
+    <string name="title_activity_main">منبر الخطيب</string>
+    <string name="package_name">com.minbar.khatib</string>
+    <string name="custom_url_scheme">com.minbar.khatib</string>
+</resources>

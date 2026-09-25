@@ -1,0 +1,47 @@
+{
+  "entities": {
+    "Sermon": {
+      "title": "Sermon",
+      "description": "Stored Islamic Friday Sermons and Series in Cloud Library",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "topic": { "type": "string" },
+        "mode": { "type": "string" },
+        "length": { "type": "string" },
+        "complexity": { "type": "string" },
+        "tone": { "type": "string" },
+        "isSeries": { "type": "boolean" },
+        "totalSeriesParts": { "type": "number" },
+        "currentSeriesPartIndex": { "type": "number" },
+        "seriesParts": { "type": "array" },
+        "intro": { "type": "string" },
+        "firstKhutbah": { "type": "string" },
+        "pauseAdvice": { "type": "string" },
+        "secondKhutbah": { "type": "string" },
+        "supplication": { "type": "string" },
+        "fullText": { "type": "string" },
+        "mainPoints": { "type": "array" },
+        "quranCitations": { "type": "array" },
+        "hadithCitations": { "type": "array" },
+        "estimatedMinutes": { "type": "number" },
+        "wordCount": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "tags": { "type": "array" },
+        "notes": { "type": "string" },
+        "category": { "type": "string" },
+        "downloadsCount": { "type": "number" },
+        "viewsCount": { "type": "number" }
+      },
+      "required": ["id", "title", "intro", "firstKhutbah", "secondKhutbah", "supplication"]
+    }
+  },
+  "firestore": {
+    "/sermons/{sermonId}": {
+      "schema": "Sermon",
+      "description": "Cloud stored Friday Sermons and Sermon Series"
+    }
+  }
+}

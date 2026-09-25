@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1097320271809",
+    "project_id": "gen-lang-client-0686392114",
+    "storage_bucket": "gen-lang-client-0686392114.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1097320271809:android:1c7480079335fab62b6940",
+        "android_client_info": {
+          "package_name": "com.minbar.khatib"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1097320271809-sn499bcos7cn7o1u0n4knidora6b2cel.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD8Op4NdUxldY5GOE5ODFZ6LTo9t6orn-8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1097320271809-sn499bcos7cn7o1u0n4knidora6b2cel.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
