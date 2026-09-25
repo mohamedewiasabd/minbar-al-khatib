@@ -24,6 +24,7 @@ export ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
 JS_GRADLE="android/app/build/outputs"
 APK="$ROOT/release/apk"
 PLAY="$ROOT/release/play"
+mkdir -p "$APK" "$PLAY"
 
 log(){ printf '\n\033[1;36m▶ %s\033[0m\n' "$*"; }
 ok(){ printf '\033[1;32m✓ %s\033[0m\n' "$*"; }
