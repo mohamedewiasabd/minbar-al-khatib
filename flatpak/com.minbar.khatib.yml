@@ -16,7 +16,10 @@ finish-args:
   - --filesystem=home
 build-options:
   env:
+    HOME: /run/build/minbar-khatib
     PATH: /usr/lib/sdk/node22/bin:/usr/lib/sdk/rust-stable/bin:/usr/bin:/bin
+    npm_config_cache: /run/build/minbar-khatib/npm-cache
+    npm_config_update_notifier: 'false'
     CARGO_HOME: /run/build/minbar-khatib/rust-cargo
 cleanup:
   - /include
