@@ -1,10 +1,7 @@
 app-id: com.minbar.khatib
-runtime: org.freedesktop.Platform
-runtime-version: '24.08'
-sdk: org.freedesktop.Sdk
-sdk-extensions:
-  - org.freedesktop.Sdk.Extension.node22
-  - org.freedesktop.Sdk.Extension.rust-stable
+runtime: org.gnome.Platform
+runtime-version: '47'
+sdk: org.gnome.Sdk
 command: minbar-khatib
 separate-locales: false
 finish-args:
@@ -14,13 +11,6 @@ finish-args:
   - --socket=wayland
   - --device=dri
   - --filesystem=home
-build-options:
-  env:
-    HOME: /run/build/minbar-khatib
-    PATH: /usr/lib/sdk/node22/bin:/usr/lib/sdk/rust-stable/bin:/usr/bin:/bin
-    npm_config_cache: /run/build/minbar-khatib/npm-cache
-    npm_config_update_notifier: 'false'
-    CARGO_HOME: /run/build/minbar-khatib/rust-cargo
 cleanup:
   - /include
   - /share/man
@@ -29,19 +19,26 @@ cleanup:
 modules:
   - name: minbar-khatib
     buildsystem: simple
+    only-arches:
+      - x86_64
     build-commands:
-      - npm install --no-audit --no-fund
-      - npm run build
-      - cd src-tauri && cargo build --release
-      - install -Dm755 src-tauri/target/release/minbar-khatib /app/bin/minbar-khatib
-      - install -Dm644 flatpak/com.minbar.khatib.desktop /app/share/applications/com.minbar.khatib.desktop
-      - install -Dm644 flatpak/com.minbar.khatib.metainfo.xml /app/share/metainfo/com.minbar.khatib.metainfo.xml
-      - install -Dm644 src-tauri/icons/32x32.png /app/share/icons/hicolor/32x32/apps/com.minbar.khatib.png
-      - install -Dm644 src-tauri/icons/64x64.png /app/share/icons/hicolor/64x64/apps/com.minbar.khatib.png
-      - install -Dm644 src-tauri/icons/128x128.png /app/share/icons/hicolor/128x128/apps/com.minbar.khatib.png
-      - install -Dm644 src-tauri/icons/128x128@2x.png /app/share/icons/hicolor/256x256/apps/com.minbar.khatib.png
-      - install -Dm644 src-tauri/icons/icon.png /app/share/icons/hicolor/512x512/apps/com.minbar.khatib.png
+      - |
+        set -e
+        mkdir -p deb-extract
+        ar -x *.deb --output deb-extract
+        tar -C deb-extract -xf deb-extract/data.tar.gz
+      - install -Dm755 deb-extract/usr/bin/minbar-khatib /app/bin/minbar-khatib
+      - install -Dm644 deb-extract/usr/share/applications/minbar-khatib.desktop /app/share/applications/com.minbar.khatib.desktop
+      - sed -i 's/^Icon=.*/Icon=com.minbar.khatib/' /app/share/applications/com.minbar.khatib.desktop
+      - install -Dm644 deb-extract/usr/share/icons/hicolor/32x32/apps/minbar-khatib.png /app/share/icons/hicolor/32x32/apps/com.minbar.khatib.png
+      - install -Dm644 deb-extract/usr/share/icons/hicolor/128x128/apps/minbar-khatib.png /app/share/icons/hicolor/128x128/apps/com.minbar.khatib.png
+      - install -Dm644 deb-extract/usr/share/icons/hicolor/256x256@2/apps/minbar-khatib.png /app/share/icons/hicolor/512x512/apps/com.minbar.khatib.png
+      - install -Dm644 com.minbar.khatib.metainfo.xml /app/share/metainfo/com.minbar.khatib.metainfo.xml
     sources:
-      - type: git
-        url: https://github.com/mohamedewiasabd/minbar-al-khatib
-        branch: main
+      - type: file
+        url: https://github.com/mohamedewiasabd/minbar-al-khatib/releases/download/v1.13/minbar-khatib_1.13.0_amd64.deb
+        sha256: f0f1edc16a5f33e9d31ac0ca11b004242cb41ea38f2fe3fe395e0c597d003116
+        only-arches:
+          - x86_64
+      - type: file
+        path: com.minbar.khatib.metainfo.xml

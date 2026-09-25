@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
@@ -16,14 +16,13 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y flatpak flatpak-builder ca-certificates
+          flatpak-builder --version
 
-      - name: Add Flathub remote + SDK runtimes
+      - name: Add Flathub remote + GNOME runtime
         run: |
           sudo flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-          sudo flatpak install -y --noninteractive org.freedesktop.Platform//24.08
-          sudo flatpak install -y --noninteractive org.freedesktop.Sdk//24.08
-          sudo flatpak install -y --noninteractive org.freedesktop.Sdk.Extension.node22//24.08
-          sudo flatpak install -y --noninteractive org.freedesktop.Sdk.Extension.rust-stable//24.08
+          sudo flatpak install -y --noninteractive org.gnome.Platform//47
+          sudo flatpak install -y --noninteractive org.gnome.Sdk//47
 
       - name: Build flatpak
         run: |

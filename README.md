@@ -45,7 +45,8 @@
 |---|---|
 | **Debian / Ubuntu / Mint** | `sudo apt install ./minbar-khatib_1.13.0_amd64.deb` |
 | **AppImage (كل التوزيعات)** | `chmod +x minbar-khatib_1.13.0_amd64.AppImage && ./minbar-khatib_1.13.0_amd64.AppImage` |
-| **Flatpak (Flathub)** | `flatpak install flathub com.minbar.khatib` — ⏳ جارٍ النشر (المانيفيست في `flatpak/` وفرع `com.minbar.khatib`) |
+| **Flatpak (تنزيل مباشر)** | `flatpak install --user ./com.minbar.khatib.flatpak` — ملف الحزمة في [صفحة الإصدارات](https://github.com/mohamedewiasabd/minbar-al-khatib/releases) |
+| **Flatpak (Flathub)** | `flatpak install flathub com.minbar.khatib` — ⏳ قيد إرسال التطبيق للنشر (المانيفيست في `flatpak/` وفرع `com.minbar.khatib`) |
 | **Arch / Manjaro (AUR)** | ⏳ جارٍ الإعداد — `PKGBUILD` جاهز في `packaging/aur/` |
 | **Snap (Snapcraft)** | ⏳ مخطط له مستقبلاً |
 
@@ -57,6 +58,7 @@
 2. حمّل ملف النسخة المناسب لتوزيعتك:
    - **`.deb`** → أنظمة `dpkg` (Debian، Ubuntu، Mint، Pop!_OS، elementary، Zorin) — التثبيت: `sudo apt install ./minbar-khatib_*.deb`
    - **`.AppImage`** → أي توزيعة (بدون تثبيت، ملف واحد قابل للتنفيذ)
+   - **`com.minbar.khatib.flatpak`** → أي توزيعة (تتطلب Flatpak): `flatpak install --user ./com.minbar.khatib.flatpak`
    - **`.exe` / `.msi`** → ويندوز 10/11
    - **`.dmg`** → ماك (Apple Silicon `_aarch64` / Intel `_x64`)
 3. زوّر المتغير: يتوفر إضافياً `sha256sum -c SHA256SUMS-*.txt` للتحقق من سلامة الملفات.

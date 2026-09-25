@@ -135,8 +135,13 @@ fetch_ci_artifacts() {
     find "$d" -type f -name '*.ipa' -exec cp {} "$ROOT/release/ipa/" \; 2>/dev/null || true
     find "$d" -type d \( -name '*.app' -o -name '*.dSYM' \) -exec cp -R {} "$ROOT/release/ipa/" \; 2>/dev/null || true
   done
+  for d in "$TMP"/minbar-flatpak-*; do
+    [ -d "$d" ] || continue
+    mkdir -p "$ROOT/release/desktop/linux"
+    find "$d" -type f -name '*.flatpak' -exec cp {} "$ROOT/release/desktop/linux/" \; 2>/dev/null || true
+  done
   rm -rf "$TMP"
-  printf '  ✓ نواتج CI جُلبت → release/desktop/{linux,windows,macos} + release/ipa\n'
+  printf '  ✓ نواتج CI جُلبت → release/desktop/{linux,windows,macos} + release/ipa + release/desktop/linux/*.flatpak\n'
   find "$ROOT"/release/desktop/ "$ROOT"/release/ipa/ -type f -exec md5sum {} + 2>/dev/null || true
 }
 
