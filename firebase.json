@@ -2,10 +2,24 @@
   "firestore": {
     "rules": "firestore.rules"
   },
-  "hosting": {
-    "site": "gen-lang-client-0686392114",
-    "public": "release/privacy-site",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "cleanUrls": true
-  }
+  "hosting": [
+    {
+      "site": "gen-lang-client-0686392114",
+      "public": "release/privacy-site",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "cleanUrls": true
+    },
+    {
+      "site": "minbar-khatib-app",
+      "public": "dist",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "cleanUrls": true,
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    }
+  ]
 }

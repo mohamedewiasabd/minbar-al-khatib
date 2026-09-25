@@ -1,0 +1,37 @@
+# Packager: Mohamed Ewias Abd <mohamedewiasabd@gmail.com>
+# Git: https://aur.archlinux.org/minbar-khatib.git
+# ملاحظة: يُبنى المعيار الأصلي من AppImage الرسمي المنشور في GitHub Releases.
+
+pkgname=minbar-khatib
+pkgver=1.13.0
+pkgrel=1
+pkgdesc="Smart Friday sermon generator — منبر الخطيب الذكي (مولد خطب الجمعة)"
+arch=('x86_64')
+url="https://minbar-khatib-app.web.app"
+license=('LicenseRef-proprietary')
+depends=('libwebkit2gtk' 'gtk3' 'libappindicator-gtk3' 'librsvg' 'openssl')
+source=("minbar-khatib_${pkgver}_amd64.AppImage::https://github.com/mohamedewiasabd/minbar-al-khatib/releases/download/v${pkgver}/minbar-khatib_${pkgver}_amd64.AppImage")
+sha256sums=('6511af05b914cf9c574ee89b4e870507d3949dd789ffee358fb6441484f4187d')
+
+package() {
+  cd "${srcdir}"
+
+  mkdir -p "${pkgdir}/opt/minbar-khatib"
+  chmod +x "minbar-khatib_${pkgver}_amd64.AppImage"
+  ./minbar-khatib_${pkgver}_amd64.AppImage --appimage-extract >/dev/null
+  cp -r squashfs-root/* "${pkgdir}/opt/minbar-khatib/"
+
+  install -Dm644 squashfs-root/usr/share/icons/hicolor/512x512/apps/*.png \
+    "${pkgdir}/usr/share/icons/hicolor/512x512/apps/com.minbar.khatib.png" 2>/dev/null || true
+
+  install -Dm644 squashfs-root/*.desktop "${pkgdir}/usr/share/applications/com.minbar.khatib.desktop" 2>/dev/null || true
+
+  mkdir -p "${pkgdir}/usr/bin"
+  cat > "${pkgdir}/usr/bin/minbar-khatib" <<'EOF'
+#!/bin/sh
+exec /opt/minbar-khatib/AppRun "$@"
+EOF
+  chmod +x "${pkgdir}/usr/bin/minbar-khatib"
+}
+
+# vim:set ts=2 sw=2 et:

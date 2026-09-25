@@ -1,134 +1,114 @@
-# منبر الخطيب — مولد خُطب الجمعة الذكي
+<div dir="rtl" align="center">
 
-منصة ذكية لخطباء وأئمة الجمعة لصياغة خطب منبرية محكمة بالذكاء الاصطناعي مع حفظ سحابي كامل، ودعم اللهجات الإقليمية، وإصدار موبايل أندرويد أصلي (Capacitor) مع إعلانات AdMob.
+# منبر الخطيب الذكي — مولد خطب الجمعة
+
+### صياغة خطب منبرية محكمة بالذكاء الاصطناعي، بلمسة إنسانية، وبحفظ سحابي كامل
+
+[![Web](https://img.shields.io/badge/الويب-تطبيق_مباشر-0a3a2a?style=for-the-badge&logo=firebase)](https://minbar-khatib-app.web.app)
+[![Play Store](https://img.shields.io/badge/Google_Play-تثبيت-18b34b?style=for-the-badge&logo=googleplay)](https://play.google.com/store/apps/details?id=com.minbar.khatib)
+[![GitHub Release](https://img.shields.io/badge/releases-تنزيل_مباشر-181717?style=for-the-badge&logo=github)](https://github.com/mohamedewiasabd/minbar-al-khatib/releases)
+
+</div>
 
 ---
 
-## التشغيل المحلي (تطوير)
+## حول التطبيق
 
-**المتطلبات:** Node.js 20+
+**منبر الخطيب الذكي** منصة ذكية مخصصة للخطباء وأئمة وخطباء الجمعة والعيد لصياغة خطب منبرية محكمة بالذكاء الاصطناعي، مع حفظ سحابي كامل لخطبك وتنظيمها، ودعم اللهجات الإقليمية، وتصدير بصيغ متعددة (Word / PDF / نص).
 
-```bash
-npm install
-```
+- 🤖 **توليد ذكي بالذكاء الاصطناعي** (Gemini) مع فحوصات شرعية وصحية للتوصيف المنبري.
+- ☁️ **حساب سحابي** — حفظ خطبك ومزامنتها عبر كل أجهزتك (Google / بريد إلكتروني).
+- 📂 **سلسلات خطب** — مناسبات (رمضان، العيد، الجمعة) وذكرى الهجرة والنصر.
+- 🌍 **لهجات إقليمية** — صياغة تتناسب مع المنطقة (مصري، شامي، خليجي، مغاربي، عام…).
+- 📤 **تصدير** Word / PDF / نص، ومشاركة مباشرة.
+- 📱 **متوفر على**: ويب • أندرويد • ويندوز • لينكس • ماك • ايفون.
 
-ضع مفتاح Gemini في ملف `.env`:
+---
 
-```
-GEMINI_API_KEY=AIzaSyC7Gng-5SP6ayz8w51Gmz8M_OpAPI8NTeI
-```
+## روابط الموقع
 
-ثم شغّل التطبيق:
+| | الرابط |
+|---|---|
+| 🌐 تطبيق الويب المباشر | **https://minbar-khatib-app.web.app** |
+| 📜 سياسة الخصوصية | **https://gen-lang-client-0686392114.web.app** |
+| 📢 ملف `app-ads.txt` | `https://gen-lang-client-0686392114.web.app/app-ads.txt` |
+| 🏪 صفحة بلاي ستور | `https://play.google.com/store/apps/details?id=com.minbar.khatib` |
+| 📦 إصدارات التحميل المباشر | `https://github.com/mohamedewiasabd/minbar-al-khatib/releases` |
 
-```bash
-npm run dev
-```
+---
 
-يخدم Vite الواجهة على المنفذ 3000 (مع خادم التوليد Express).
+## التحميل على أجهزة لينكس 🐧
 
-## البناء والإصدار (ويب)
+التوزيعات المختلفة تتلقى نفس الملفات الجوهرية (مسار تبعية واحدة) مع اختلاف في الطريقة:
 
-```bash
-npm run build
-npm start          # تشغيل خادم الإنتاج: node dist/server.cjs
-```
+| التوزيعة / الطريقة | الأمر / الخطوة |
+|---|---|
+| **Debian / Ubuntu / Mint** | `sudo apt install ./minbar-khatib_1.13.0_amd64.deb` |
+| **AppImage (كل التوزيعات)** | `chmod +x minbar-khatib_1.13.0_amd64.AppImage && ./minbar-khatib_1.13.0_amd64.AppImage` |
+| **Flatpak (Flathub)** | `flatpak install flathub com.minbar.khatib` — ⏳ جارٍ النشر (المانيفيست في `flatpak/` وفرع `com.minbar.khatib`) |
+| **Arch / Manjaro (AUR)** | ⏳ جارٍ الإعداد — `PKGBUILD` جاهز في `packaging/aur/` |
+| **Snap (Snapcraft)** | ⏳ مخطط له مستقبلاً |
 
-## التوليد المباشر داخل التطبيق (بدون سيرفر)
+> أي تقريب للـ AppImage فقط؟ استخدم **Gear Lever** أو **AppImageLauncher**: `sudo apt install appimagelauncher`.
 
-التطبيق الأصلي يولد الخطب مباشرة عبر مفتاح Gemini المدمج (افتراضي):
-- المفتاح في `.env` ضمن `VITE_GEMINI_API_KEY` (يُضمّن في حزمة الموبايل).
-- إذا أضفت `VITE_API_URL` يفترض هذا المتغير بديلاً رئيسياً ويُستخدم الخادم السحابي المنشور (Cloud Run).
-- عند حذف `VITE_API_URL` يعود التطبيق تلقائياً للتوليد المباشر بمفتاح Gemini، معتمداً على أحدث إصدار من النماذج تلقائياً.
-- ملفات Word تُقرأ محلياً داخل التطبيق إن لم يوجد خادم.
+### التنزيل المباشر حسب التوزيعة
 
-## ملفات الإصدار النهائي (تم بناؤها)
+1. افتح صفحة [الإصدارات](https://github.com/mohamedewiasabd/minbar-al-khatib/releases) على GitHub.
+2. حمّل ملف النسخة المناسب لتوزيعتك:
+   - **`.deb`** → أنظمة `dpkg` (Debian، Ubuntu، Mint، Pop!_OS، elementary، Zorin) — التثبيت: `sudo apt install ./minbar-khatib_*.deb`
+   - **`.AppImage`** → أي توزيعة (بدون تثبيت، ملف واحد قابل للتنفيذ)
+   - **`.exe` / `.msi`** → ويندوز 10/11
+   - **`.dmg`** → ماك (Apple Silicon `_aarch64` / Intel `_x64`)
+3. زوّر المتغير: يتوفر إضافياً `sha256sum -c SHA256SUMS-*.txt` للتحقق من سلامة الملفات.
 
-| الملف | الغرض | الحجم |
-| --- | --- | --- |
-| `release/MinbarKhatib-v1.3.apk` | تثبيت مباشر (APK موقّع) | ~10.9 MB |
-| `release/MinbarKhatib-v1.3.aab` | رفعه إلى Google Play (Android App Bundle) | ~10.6 MB |
-
-نمط اسم التطبيق يتغيّر بحسب لغة الجهاز: العربية <= "منبر الخطيب"، الإنجليزية <= "Minbar Al-Khatib" (`res/values-en/strings.xml`).
-
-التوقيع بمفتاح `keystore/minbar-khatib-release.keystore` (آلياً `minbar-khatib`)، ويُفضل استخدام Google Play App Signing بعد رفع مفتاح التحميل.
-
-تسجيل الدخول: داخل التطبيق الأصلي يتم عبر **Google Sign-In أصلي** (`@capacitor-firebase/authentication` v8) ثم ربط الرمز بحساب Web Firebase؛ وعلى المتصفح يُستخدم النافذة المنبثقة. يعطّل النقر بواجهة نظام جوجل (وليس WebView منبثق) — لذا لن تظهر رسالة "The requested action is invalid" في النسخة الأصلية.
-
-## الأيقونات والصور
-
-- الملف الرئيسي للأيقونة: `assets/brand/icon-master.svg` (الهوية البصرية: تدرج أخضر + محراب + كتاب مفتوح + منبر + هلال ونجمة ذهبيين).
-- شارة التطبيق المقصوصة (بدون الخلفية) للتكيفية: `assets/brand/icon-glyph.svg`.
-- الأيقونات (mipmap بكل الكثافات)، شاشة السبلاش (بورتريه/لاندسكيب)، وفافيكو الويب المتعددة تُولَّد آلياً عبر `sharp` بأمر:
+### التحقق من سلامة الملفات (عام)
 
 ```bash
-node scripts/generate-assets.mjs
+sha256sum minbar-khatib_1.13.0_amd64.deb
+# قارن الرقم مع الناتج المرسوم في صفحة الإصدارات (SHA256SUMS)
 ```
 
-بعد توليد الصور يعاد البناء بـ `npx cap sync android` ثم خطوات البناء أدناه.
+---
 
-## البناء للنسخة الأصلية (أندرويد APK)
+## تطوير وبناء محلي
 
-المشروع مجهز بـ **Capacitor 8** و**@capacitor-community/admob 8**.
-
-### 1. بناء الواجهة وتزامنها
+**المتطلبات:** Node.js 22+ و (لأجهزة سطح المكتب) Rust stable.
 
 ```bash
-npm run build
-npx cap sync android
+npm install                 # حزم الويب
+npm run dev                 # تشغيل خادم التطوير Vite (منفذ 3000)
+npm run build               # بناء الويب (dist/ + server.cjs)
+npm start                   # تشغيل خادم الإنتاج (node dist/server.cjs)
 ```
 
-### 2. إضافة مشروع أندرويد (أول مرة فقط)
+| أمر | الناتج |
+|---|---|
+| `npm run desktop:build` | حزمة Tauri لنظامك الحالي (deb / AppImage على لينكس) |
+| `npm run desktop:build:linux` | لينكس: `deb` + `AppImage` |
+| `npm run android:release` | نسخة أندرويد موقّعة (يتطلب أسرار التوقيع) |
+| `npm run ios:sync` | مزامنة منصة iOS |
 
-```bash
-npx cap add android
-```
+> لبناء أندرويد موقّع يجب وجود مفتاح التوقيع وأسراره (ممنوع رفعها). راجع `AGENTS.md`.
 
-### 3. إعداد رابط السيرفر السحابي
+---
 
-التطبيق الأصلي يستدعي `/api/generate-khutbah` و`/api/parse-docx` من خادم نشره. حدّد الرابط في **`capacitor.config.ts`** (أو متغير البناء `VITE_API_URL`):
+## بنية التقنيات
 
-```ts
-server: {
-  url: 'https://YOUR_CLOUD_RUN_URL.run.app',
-  androidScheme: 'https',
-},
-```
+`Capacitor 8` · `React 19` · `Vite 6` · `Tailwind 4` · `Tauri 2` · `Firebase (Auth + Firestore)` · `Google Gemini` · `AdMob`.
 
-ثم أعد:
+| المنصة | البنية | المستودع/الـ CI |
+|---|---|---|
+| ويب | Vite + Firebase Hosting | `minbar-khatib-app.web.app` |
+| أندرويد | Capacitor 8 | `.github/workflows` + Gradle |
+| ويندوز / لينكس / ماك | Tauri 2 | `.github/workflows/desktop.yml` |
+| ايفون | Capacitor 8 | `.github/workflows/ios.yml` |
 
-```bash
-npx cap sync android
-```
+---
 
-### 4. فتح وإنشاء APK في Android Studio
+## المساهمة والملاحظات
 
-```bash
-npx cap open android
-```
+وجدت خطأ أو لديك اقتراح؟ افتح [Issue](https://github.com/mohamedewiasabd/minbar-al-khatib/issues) وسنتكفل به.
 
-في Android Studio:
-- انتظر اكتمال مزامنة Gradle
-- اختر **Run ▶** لتثبيت التطبيق على جهاز/محاكي، أو
-- **Build → Generate Signed App Bundle / APK** لإصدار APK موقع
-- تُخرج الحزمة النهائية من مجلد `android/app/build/outputs/`
-
-> **ملاحظة AdMob:** للتجربة ضع `initializeForTesting: true` في `capacitor.config.ts` (إعلانات تجريبية). عند الإصدار النهائي أعده `false`.
-
-## هيكل منصات الإعلانات (AdMob)
-
-الوحدات معرّفة في `src/lib/admob.ts`:
-
-| الوحدة | النوع | الحالة |
-| --- | --- | --- |
-| بانر سفلي | `8528168842` | يظهر في تبويب لوحة الإحصائيات (dashboard) |
-| مدمج مع المحتوى (مستطيل 300×250) | `8528168842` (وحدة البانر بالحجم المتوسط) | يُعرض داخل صفحة خُطب الجمعة بين الأقسام (`AdSlot`) |
-| فتح التطبيق (App Open) | `5027907536` | يُعرض مرة واحدة عند إطلاق التطبيق |
-| بمكافأة (Rewarded) | `7016579848` | يُعرض قبل فتح قراءة الخطبة وتنزيلها في التطبيق الأصلي |
-
-> **تنبيه:** إعلان "Native Advanced" المطلوب وحدته `3545484644` يتطلب شيفرة أصلية (Java) إضافية ليست مغطاة بمكتبة `@capacitor-community/admob`. الوحدة محجوزة في `ADMOB_CONFIG` للتنفيذ مستقبلاً عند توسيع مشروع أندرويد.
-
-## ملاحظات تقنية
-
-- الحفظ والقراءة سحابيان بالكامل عبر Firestore (لا يوجد تخزين محلي).
-- خادم Node مسؤول عن التوليد (Gemini) وقراءة ملفات Word فقط.
-- `vite.config.ts` يستخدم `base: './'` لصالح حزم الموبايل.
+<div dir="rtl" align="center">
+  <sub>صنع بكل ❤️ لخدمة دُعاة الإسلام · <a href="https://gen-lang-client-0686392114.web.app">سياسة الخصوصية</a> · <a href="https://minbar-khatib-app.web.app/app-ads.txt">app-ads.txt</a></sub>
+</div>

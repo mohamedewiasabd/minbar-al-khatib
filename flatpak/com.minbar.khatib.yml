@@ -1,0 +1,44 @@
+app-id: com.minbar.khatib
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.node22
+  - org.freedesktop.Sdk.Extension.rust-stable
+command: minbar-khatib
+separate-locales: false
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  - --filesystem=home
+build-options:
+  env:
+    PATH: /usr/lib/sdk/node22/bin:/usr/lib/sdk/rust-stable/bin:/usr/bin:/bin
+    CARGO_HOME: /run/build/minbar-khatib/rust-cargo
+cleanup:
+  - /include
+  - /share/man
+  - '*.a'
+  - '*.la'
+modules:
+  - name: minbar-khatib
+    buildsystem: simple
+    build-commands:
+      - npm install --no-audit --no-fund
+      - npm run build
+      - cd src-tauri && cargo build --release
+      - install -Dm755 src-tauri/target/release/minbar-khatib /app/bin/minbar-khatib
+      - install -Dm644 flatpak/com.minbar.khatib.desktop /app/share/applications/com.minbar.khatib.desktop
+      - install -Dm644 flatpak/com.minbar.khatib.metainfo.xml /app/share/metainfo/com.minbar.khatib.metainfo.xml
+      - install -Dm644 src-tauri/icons/32x32.png /app/share/icons/hicolor/32x32/apps/com.minbar.khatib.png
+      - install -Dm644 src-tauri/icons/64x64.png /app/share/icons/hicolor/64x64/apps/com.minbar.khatib.png
+      - install -Dm644 src-tauri/icons/128x128.png /app/share/icons/hicolor/128x128/apps/com.minbar.khatib.png
+      - install -Dm644 src-tauri/icons/128x128@2x.png /app/share/icons/hicolor/256x256/apps/com.minbar.khatib.png
+      - install -Dm644 src-tauri/icons/icon.png /app/share/icons/hicolor/512x512/apps/com.minbar.khatib.png
+    sources:
+      - type: git
+        url: https://github.com/mohamedewiasabd/minbar-al-khatib
+        branch: main

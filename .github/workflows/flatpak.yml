@@ -1,0 +1,43 @@
+name: Flatpak (Flathub)
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install flatpak tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder ca-certificates
+
+      - name: Add Flathub remote + SDK runtimes
+        run: |
+          sudo flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          sudo flatpak install -y --noninteractive org.freedesktop.Platform//24.08
+          sudo flatpak install -y --noninteractive org.freedesktop.Sdk//24.08
+          sudo flatpak install -y --noninteractive org.freedesktop.Sdk.Extension.node22//24.08
+          sudo flatpak install -y --noninteractive org.freedesktop.Sdk.Extension.rust-stable//24.08
+
+      - name: Build flatpak
+        run: |
+          mkdir -p build-dir
+          flatpak-builder --force-clean --state-dir=fdk-build-state --repo=fdk-build-repo build-dir flatpak/com.minbar.khatib.yml
+
+      - name: Bundle .flatpak
+        run: |
+          mkdir -p dist-flatpak
+          flatpak build-bundle --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo fdk-build-repo dist-flatpak/com.minbar.khatib.flatpak com.minbar.khatib
+
+      - name: Upload bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: minbar-flatpak
+          path: dist-flatpak/com.minbar.khatib.flatpak
+          if-no-files-found: error

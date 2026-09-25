@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Minbar Al-Khatib
+Name[ar]=منبر الخطيب الذكي
+Comment=Smart Friday sermon generator
+Comment[ar]=مولد خطب الجمعة الذكي
+Exec=minbar-khatib
+Icon=com.minbar.khatib
+Terminal=false
+Categories=Education;Utility;
+StartupNotify=true
