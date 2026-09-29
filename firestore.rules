@@ -46,6 +46,26 @@ service cloud.firestore {
       allow create, update, delete: if request.auth != null
         && request.auth.token.email == 'cafnews6@gmail.com';
     }
+
+    // المزوّدات المفتوحة للاستخدام العام: يقرؤها أي مصادق، ولا يعرضها إلا صاحبها
+    match /sharedProviders/{docId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if request.auth != null && request.resource.data.ownerUid == request.auth.uid;
+    }
+
+    // مكافآت المزوّد المشترك: يُسجّل كل مستخدم استخدامه لمزوّد عام صالح (نقطة لصاحبه)،
+    // ولا يقرؤها إلا صاحب المزوّد لتسلمها في حسابه
+    match /providerRewards/{rewardId} {
+      allow create: if request.auth != null
+        && request.resource.data.fromUid == request.auth.uid
+        && request.resource.data.ownerUid != request.auth.uid
+        && request.resource.data.amount == 1
+        && exists(/databases/$(database)/documents/sharedProviders/$(request.resource.data.providerDocId))
+        && get(/databases/$(database)/documents/sharedProviders/$(request.resource.data.providerDocId)).data.ownerUid == request.resource.data.ownerUid
+        && get(/databases/$(database)/documents/sharedProviders/$(request.resource.data.providerDocId)).data.active == true;
+      allow read, update, delete: if request.auth != null && resource.data.ownerUid == request.auth.uid;
+    }
   }
 }
 

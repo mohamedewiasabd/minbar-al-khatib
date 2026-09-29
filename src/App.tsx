@@ -26,6 +26,7 @@ import { useAuth } from './context/AuthContext';
 import { useAdMob } from './context/AdMobContext';
 import { usePoints } from './context/PointsContext';
 import { showRewardedAd } from './lib/admob';
+import { resolveGenerationAccess, recordProviderReward } from './lib/providerSettings';
 import { totalSermonCount } from './utils/sermonStats';
 import { ProfilePage } from './components/ProfilePage';
 import { PointsGateModal } from './components/PointsGateModal';
@@ -33,7 +34,7 @@ import AppsPage from './components/AppsPage';
 import ProvidersPage from './components/ProvidersPage';
 
 export default function App() {
-  const { isAdmin, openLoginModal } = useAuth();
+  const { isAdmin, user, openLoginModal } = useAuth();
   const { isNative, adMobReady, showBanner } = useAdMob();
   const { points, watchRewardedForPoints, spendPointsForGeneration, refundPoints } = usePoints();
   const [currentTab, setCurrentTab] = useState<'home' | 'generator' | 'dashboard' | 'apps' | 'guide' | 'profile' | 'providers'>('home');
@@ -125,6 +126,23 @@ export default function App() {
         // notification already shown inside runGeneration
       }
       return;
+    }
+
+    // Free generation: logged-in users with their own provider key or a shared provider
+    if (user?.uid) {
+      const access = await resolveGenerationAccess(user.uid);
+      if (access.free) {
+        try {
+          await runGeneration(request);
+          // Reward the shared provider owner after a successful generation
+          if (access.source === 'shared' && access.sharedProviderDocId) {
+            await recordProviderReward(access.sharedProviderDocId, user.uid);
+          }
+        } catch {
+          // notification already shown inside runGeneration
+        }
+        return;
+      }
     }
 
     const cost = request.isSeries ? 5 : 1;
@@ -237,8 +255,13 @@ export default function App() {
   ) => {
     const cost = targetSermon.isSeries ? 5 : 1;
 
-    // Non-admin must have sufficient points to regenerate
-    if (!isAdmin) {
+    // Free regeneration: logged-in users with their own provider key or a shared provider
+    const freeAccess =
+      !isAdmin && user?.uid ? await resolveGenerationAccess(user.uid) : null;
+    const isFree = Boolean(freeAccess?.free);
+
+    // Non-admin must have sufficient points to regenerate (unless exempt via provider)
+    if (!isAdmin && !isFree) {
       if (points < cost) {
         setPointsGateAction({
           cost,
@@ -313,8 +336,13 @@ export default function App() {
           : `تم توليد نسخة جديدة بعنوان "${finalSermon.title}" وحفظها سحابياً!`
       );
       window.scrollTo({ top: 380, behavior: 'smooth' });
+
+      // Reward the shared provider owner after a successful regeneration
+      if (freeAccess?.source === 'shared' && freeAccess.sharedProviderDocId && user?.uid) {
+        await recordProviderReward(freeAccess.sharedProviderDocId, user.uid);
+      }
     } catch (err: any) {
-      if (!isAdmin) {
+      if (!isAdmin && !isFree) {
         await refundPoints(cost, 'استرجاع نقاط بعد فشل إعادة التوليد');
       }
       showNotification(err?.message || 'فشل إعادة توليد الخطبة، يرجى المحاولة لاحقاً', 'error');

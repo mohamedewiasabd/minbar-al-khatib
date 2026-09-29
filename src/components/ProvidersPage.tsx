@@ -12,17 +12,29 @@ import {
   CheckCircle2,
   AlertCircle,
   Sparkles,
+  Globe,
+  Share2,
+  Coins,
+  X,
+  UserRound,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { PROVIDERS, getProvider, AiProvider } from '../lib/providers';
 import {
   ProviderSettings,
   EffectiveProviderSettings,
+  SharedProviderDoc,
+  ProviderReward,
   subscribeUserSettings,
   subscribeAdminSettings,
+  subscribeSharedProviders,
+  subscribeProviderRewardsForOwner,
   saveUserSettings,
   deleteUserSettings,
   saveAdminSettings,
+  createSharedProvider,
+  removeSharedProvider,
+  setSharedProviderSelection,
 } from '../lib/providerSettings';
 
 function ProviderBadge({ provider }: { provider: AiProvider }) {
@@ -45,11 +57,18 @@ function ProviderBadge({ provider }: { provider: AiProvider }) {
   );
 }
 
-function SourceBadge({ source }: { source: EffectiveProviderSettings['source'] }) {
+function SourceBadge({ source, sharedOwnerName }: { source: EffectiveProviderSettings['source']; sharedOwnerName?: string }) {
   if (source === 'user') {
     return (
       <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full text-[11px] font-bold">
-        مفتاحك الخاص
+        مفتاحك الخاص — توليد بدون نقاط
+      </span>
+    );
+  }
+  if (source === 'shared') {
+    return (
+      <span className="inline-flex items-center gap-1 bg-violet-100 text-violet-800 border border-violet-300 px-2 py-0.5 rounded-full text-[11px] font-bold">
+        مزوّد مشترك — {sharedOwnerName || 'مستخدم منبر'} — بدون نقاط
       </span>
     );
   }
@@ -72,6 +91,8 @@ export default function ProvidersPage() {
 
   const [userSettings, setUserSettings] = useState<ProviderSettings | null>(null);
   const [adminSettings, setAdminSettings] = useState<ProviderSettings | null>(null);
+  const [sharedProviders, setSharedProviders] = useState<SharedProviderDoc[]>([]);
+  const [rewards, setRewards] = useState<ProviderReward[]>([]);
 
   // مسودة نموذج المستخدم الشخصي
   const [providerId, setProviderId] = useState('gemini');
@@ -96,15 +117,21 @@ export default function ProvidersPage() {
     if (!user) {
       setUserSettings(null);
       setAdminSettings(null);
+      setSharedProviders([]);
+      setRewards([]);
       userSynced.current = false;
       adminSynced.current = false;
       return () => {};
     }
     const unsubUser = subscribeUserSettings(user.uid, (s) => setUserSettings(s));
     const unsubAdmin = subscribeAdminSettings((s) => setAdminSettings(s));
+    const unsubShared = subscribeSharedProviders(setSharedProviders);
+    const unsubRewards = subscribeProviderRewardsForOwner(user.uid, setRewards);
     return () => {
       unsubUser();
       unsubAdmin();
+      unsubShared();
+      unsubRewards();
     };
   }, [user]);
 
@@ -127,26 +154,45 @@ export default function ProvidersPage() {
     }
   }, [adminSettings]);
 
-  // الدقة الفعلية: المستخدم ثم الإدارة ثم المدمج
-  const effectiveSource: EffectiveProviderSettings['source'] =
-    userSettings?.apiKey && getProvider(userSettings.providerId)
-      ? 'user'
-      : adminSettings?.apiKey && getProvider(adminSettings.providerId)
+  // الدقة الفعلية: المستخدم ثم المشترك المختار ثم الإدارة ثم المدمج
+  const myProvider = userSettings ? getProvider(userSettings.providerId) : undefined;
+  const personalActive = Boolean(
+    userSettings && myProvider && (myProvider.requiresKey ? Boolean(userSettings.apiKey?.trim()) : true)
+  );
+  const selectedShared =
+    sharedProviders.find((p) => p.id === userSettings?.sharedProviderId) || null;
+  const adminActive = Boolean(adminSettings?.apiKey && getProvider(adminSettings.providerId));
+  const effectiveSource: EffectiveProviderSettings['source'] = personalActive
+    ? 'user'
+    : selectedShared
+      ? 'shared'
+      : adminActive
         ? 'admin'
         : 'builtin';
   const effectiveProviderId =
-    effectiveSource === 'user'
-      ? userSettings!.providerId
-      : effectiveSource === 'admin'
-        ? adminSettings!.providerId
-        : 'gemini';
+    personalActive && userSettings
+      ? userSettings.providerId
+      : selectedShared
+        ? selectedShared.providerId
+        : adminActive && adminSettings
+          ? adminSettings.providerId
+          : 'gemini';
   const activeProvider = getProvider(effectiveProviderId) || PROVIDERS[0];
-  const effectiveModel =
-    (effectiveSource === 'user' && userSettings?.model
-      ? userSettings.model
-      : effectiveSource === 'admin' && adminSettings?.model
+  const effectiveModel = personalActive && userSettings?.model
+    ? userSettings.model
+    : selectedShared
+      ? selectedShared.model || activeProvider.defaultModel
+      : adminActive && adminSettings?.model
         ? adminSettings.model
-        : '') || activeProvider.defaultModel;
+        : activeProvider.defaultModel;
+
+  const myShare =
+    sharedProviders.find((p) => p.ownerUid === user?.uid) || null;
+  const myShareUsage = myShare
+    ? rewards.filter((r) => r.providerDocId === myShare.id).length
+    : 0;
+  const pendingRewards = rewards.filter((r) => !r.claimed).length;
+  const canShare = Boolean(user && personalActive);
 
   const selectedProvider = getProvider(providerId) || PROVIDERS[0];
   const selectedAdminProvider = getProvider(adminProviderId) || PROVIDERS[0];
@@ -180,6 +226,34 @@ export default function ProvidersPage() {
     setModel('');
     setUserSaved('ok');
     setUserMsg('تمت إزالة إعداداتك الخاصة — سيعود التطبيق للاستخدام العام الافتراضي.');
+  };
+
+  const handleShareProvider = async () => {
+    if (!user || !userSettings || !personalActive) return;
+    try {
+      const ownerName = user.displayName || user.email || 'مستخدم منبر';
+      await createSharedProvider(user.uid, ownerName, userSettings);
+      setUserSaved('ok');
+      setUserMsg('تم فتح مزوّدك للاستخدام العام — وكل من يولّد خطبة به يكسبك نقطة.');
+    } catch (err: any) {
+      setUserSaved('err');
+      setUserMsg(err?.message || 'تعذر فتح المزوّد للاستخدام العام.');
+    }
+  };
+
+  const handleStopSharing = async () => {
+    if (!myShare || !user) return;
+    await removeSharedProvider(myShare.id, user.uid);
+  };
+
+  const handleUseShared = async (docId: string) => {
+    if (!user) return;
+    await setSharedProviderSelection(user.uid, docId);
+  };
+
+  const handleStopUsingShared = async () => {
+    if (!user) return;
+    await setSharedProviderSelection(user.uid, '');
   };
 
   const handleSaveAdmin = async () => {
@@ -232,10 +306,10 @@ export default function ProvidersPage() {
               <p className="text-[11px] text-stone-500 font-mono" dir="ltr">{effectiveModel}</p>
             </div>
           </div>
-          <SourceBadge source={effectiveSource} />
+          <SourceBadge source={effectiveSource} sharedOwnerName={selectedShared?.ownerName} />
         </div>
         <p className="mt-3 text-xs text-stone-500 bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 leading-relaxed">
-          التسلسل: مفتاحك الخاص ← المفتاح العام من الإدارة ← المفتاح المدمج الافتراضي (Gemini). النموذج الذي لا تختاره يُحدَّد تلقائياً كنموذج المزوّد الافتراضي.
+          التسلسل: مفتاحك الخاص ← مزوّد مشترك تختاره ← المفتاح العام من الإدارة ← المفتاح المدمج الافتراضي (Gemini). كل من يملك مفتاحاً خاصاً أو يستخدم مزوّداً مشتركاً يولّد بدون نقاط وبدون إعلان.
         </p>
       </div>
 
@@ -453,6 +527,148 @@ export default function ProvidersPage() {
             >
               {adminSaved === 'ok' ? <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" /> : <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />}
               <span>{adminMsg}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Share my provider card */}
+      {user && (
+        <div className="bg-gradient-to-br from-violet-50 to-white rounded-2xl shadow-xl shadow-violet-100/60 border border-violet-200 p-5 sm:p-6">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Share2 className="w-5 h-5 text-violet-600" />
+              <h2 className="font-cairo font-bold text-stone-900 text-lg">شارك مزوّدك للاستخدام العام</h2>
+            </div>
+            {myShare && pendingRewards > 0 && (
+              <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-800 border border-amber-300 px-2.5 py-1 rounded-full text-xs font-bold">
+                <Coins className="w-3.5 h-3.5" />
+                لديك {pendingRewards} {pendingRewards === 1 ? 'نقطة' : 'نقاط'} من المشاركة ستُضاف لحسابك
+              </span>
+            )}
+          </div>
+
+          {!canShare ? (
+            <p className="mt-3 text-xs text-stone-500 bg-white border border-violet-200 rounded-xl px-4 py-3 leading-relaxed">
+              احفظ مفتاحك الخاص أولاً في «إعداداتي الشخصية» أعلاه لتتمكن من مشاركة مزوّدك للاستخدام العام.
+              المزوّد المحلي (Ollama) لا يُشارك لأنه يعمل على جهازك فقط.
+            </p>
+          ) : myShare ? (
+            <div className="mt-3 bg-white border border-violet-200 rounded-xl p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-violet-50 border border-violet-200 flex items-center justify-center">
+                    <Globe className="w-5 h-5 text-violet-600" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-cairo font-bold text-stone-900">{getProvider(myShare.providerId)?.name}</p>
+                      <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 border border-green-300 px-2 py-0.5 rounded-full text-[11px] font-bold">
+                        <CheckCircle2 className="w-3 h-3" />
+                        مفتوح للعام
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-stone-500 font-mono" dir="ltr">{myShare.model || getProvider(myShare.providerId)?.defaultModel}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleStopSharing}
+                  className="inline-flex items-center gap-2 border border-red-300 text-red-600 hover:bg-red-50 px-4 py-2 rounded-xl font-cairo font-bold transition-all active:scale-95 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                  إيقاف المشاركة
+                </button>
+              </div>
+              <p className="mt-3 text-[11px] text-stone-500 flex items-center gap-1">
+                <Coins className="w-3.5 h-3.5 text-amber-500" />
+                عدد مرات الاستخدام حتى الآن: {myShareUsage} — تكسب نقطة عن كل خطبة يولّدها غيرك بمزوّدك.
+              </p>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleShareProvider}
+              className="mt-3 inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-5 py-2.5 rounded-xl font-cairo font-bold shadow transition-all active:scale-95 cursor-pointer"
+            >
+              <Globe className="w-4 h-4" />
+              فتح مزوّدي للاستخدام العام
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Public shared providers list */}
+      {user && (
+        <div className="bg-white rounded-2xl shadow-xl shadow-stone-200/60 border border-stone-200 p-5 sm:p-6">
+          <div className="flex items-center gap-2 mb-1">
+            <Globe className="w-5 h-5 text-emerald-600" />
+            <h2 className="font-cairo font-bold text-stone-900 text-lg">المزوّدات المشتركة من المستخدمين</h2>
+          </div>
+          <p className="text-xs text-stone-500 mb-4 leading-relaxed">
+            اختر مزوّداً فتحه مستخدم آخر لتوليد خطبك بدون نقاط وبدون إعلان — وصاحب المزوّد يكسب نقطة عن كل توليد لك.
+          </p>
+
+          {sharedProviders.filter((p) => p.ownerUid !== user.uid).length === 0 ? (
+            <div className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-6 text-center">
+              <UserRound className="w-7 h-7 text-stone-400 mx-auto" />
+              <p className="text-sm text-stone-500 mt-2">لا توجد مزوّدات مشتركة متاحة حالياً — كن أول من يفتح مزوّده للعام.</p>
+            </div>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2">
+              {sharedProviders
+                .filter((p) => p.ownerUid !== user.uid)
+                .map((p) => {
+                  const shareProvider = getProvider(p.providerId) || PROVIDERS[0];
+                  const isSelected = userSettings?.sharedProviderId === p.id;
+                  return (
+                    <div key={p.id} className="border border-stone-200 rounded-2xl p-4 flex flex-col gap-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0">
+                            <UserRound className="w-4 h-4 text-emerald-600" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-cairo font-bold text-stone-900 text-sm truncate">
+                              {p.ownerName}
+                            </p>
+                            <p className="text-[11px] text-stone-500" dir="ltr">
+                              {p.model || shareProvider.defaultModel}
+                            </p>
+                          </div>
+                        </div>
+                        <ProviderBadge provider={shareProvider} />
+                      </div>
+                      <div className="flex items-center justify-between gap-2 mt-1">
+                        {isSelected ? (
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center gap-1 bg-violet-100 text-violet-800 border border-violet-300 px-2 py-1 rounded-lg text-xs font-bold">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              تستخدمه الآن
+                            </span>
+                            <button
+                              type="button"
+                              onClick={handleStopUsingShared}
+                              className="inline-flex items-center gap-1 border border-stone-300 text-stone-600 hover:bg-stone-50 px-3 py-1 rounded-lg text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                              إلغاء
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleUseShared(p.id)}
+                            className="inline-flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-1.5 rounded-lg text-xs font-cairo font-bold transition-all active:scale-95 cursor-pointer"
+                          >
+                            <Sparkles className="w-3.5 h-3.5" />
+                            استخدامه مجاناً
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
           )}
         </div>

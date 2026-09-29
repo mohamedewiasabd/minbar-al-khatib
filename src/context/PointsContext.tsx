@@ -11,6 +11,7 @@ import {
   generationCost,
   POINTS_PER_REWARDED_AD,
 } from '../services/pointsService';
+import { claimPendingProviderRewards } from '../lib/providerSettings';
 
 interface PointsContextType {
   /** رصيد النقاط الحالي للمستخدم المسجّل */
@@ -57,6 +58,8 @@ export const PointsProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     (async () => {
       try {
         await ensureUserProfile(user);
+        // تلقّي أرباح المزوّد المشترك غير المطالب بها بعد تسجيل دخول المالك
+        await claimPendingProviderRewards(user.uid);
       } catch (err) {
         console.error('Failed to ensure user profile:', err);
       }
