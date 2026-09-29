@@ -1,6 +1,6 @@
 [package]
 name = "minbar-khatib"
-version = "1.13.0"
+version = "1.14.0"
 description = "مولد خطب الجمعة الذكي — أكاديمية المنبر"
 authors = ["Mohamed Ewias Abd"]
 edition = "2021"
