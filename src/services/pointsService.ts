@@ -194,4 +194,5 @@ export async function deleteUserData(uid: string): Promise<void> {
   const txsSnap = await getDocs(txsQuery);
   await Promise.all(txsSnap.docs.map((d) => deleteDoc(d.ref)));
   await deleteDoc(doc(db, USERS_COLLECTION, uid));
+  await deleteDoc(doc(db, 'userSettings', uid));
 }

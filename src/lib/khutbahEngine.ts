@@ -399,5 +399,15 @@ export function formatArabicErrorMessage(err: any): string {
   if (msg.includes('API_KEY') || msg.includes('401') || msg.includes('403')) {
     return 'مفتاح الربط مع الذكاء الاصطناعي غير صالح أو غير متوفر.';
   }
+  // رسائل المزوّد الجاهزة (سجل المزوّدين) تُمرَّر كما هي بدل الترجمة العامة
+  if (
+    msg.includes('المزوّد') ||
+    msg.startsWith('استجابة') ||
+    msg.startsWith('لم يتم ضبط') ||
+    msg.startsWith('فشلت جميع محاولات') ||
+    msg.startsWith('مزوّد الذكاء')
+  ) {
+    return msg;
+  }
   return 'حدث خطأ أثناء معالجة وصياغة الخطبة، يرجى المحاولة مرة أخرى.';
 }

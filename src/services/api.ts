@@ -13,6 +13,8 @@ import {
 import { db } from '../lib/firebase';
 import { apiUrl, isServerConfigured } from '../lib/apiBase';
 import { generateKhutbahDirect, parseDocxLocally } from '../lib/geminiClient';
+import { resolveEffectiveProviderSettings } from '../lib/providerSettings';
+import { auth } from '../lib/firebase';
 import { Sermon, GenerateRequest } from '../types';
 
 const SERMONS_COLLECTION = 'sermons';
@@ -112,10 +114,20 @@ export async function generateKhutbahApi(request: GenerateRequest): Promise<Serm
   let generatedSermon: Sermon;
 
   if (isServerConfigured()) {
+    const effective = await resolveEffectiveProviderSettings(auth.currentUser?.uid);
+    // عند وجود إعداد فعّال من المستخدم/الإدارة نُرسله للخادم، وإلا يبقى الخادم على مفتاحه الافتراضي
+    const body: any = { ...request };
+    if (effective.source !== 'builtin') {
+      body.provider = {
+        providerId: effective.providerId,
+        apiKey: effective.apiKey,
+        model: effective.model,
+      };
+    }
     const res = await fetch(apiUrl('/api/generate-khutbah'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(request),
+      body: JSON.stringify(body),
     });
 
     if (!res.ok) {

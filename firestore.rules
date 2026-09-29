@@ -32,6 +32,20 @@ service cloud.firestore {
         allow update: if false;
       }
     }
+
+    // إعدادات مزوّد الذكاء الاصطناعي لكل مستخدم (المالك وحده)
+    match /userSettings/{userId} {
+      allow read, create, update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // الإعداد العام/المفتاح المشترك الذي تحدده الإدارة
+    // يقرؤه المصادقون (لأنه يُستخدم افتراضياً لمن لا مفتاح خاص له)، ولا يكتبه إلا المسؤول
+    match /adminSettings/{docId} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if request.auth != null
+        && request.auth.token.email == 'cafnews6@gmail.com';
+    }
   }
 }
 

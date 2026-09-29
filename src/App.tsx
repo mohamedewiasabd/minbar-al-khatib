@@ -30,12 +30,13 @@ import { totalSermonCount } from './utils/sermonStats';
 import { ProfilePage } from './components/ProfilePage';
 import { PointsGateModal } from './components/PointsGateModal';
 import AppsPage from './components/AppsPage';
+import ProvidersPage from './components/ProvidersPage';
 
 export default function App() {
   const { isAdmin, openLoginModal } = useAuth();
   const { isNative, adMobReady, showBanner } = useAdMob();
   const { points, watchRewardedForPoints, spendPointsForGeneration, refundPoints } = usePoints();
-  const [currentTab, setCurrentTab] = useState<'home' | 'generator' | 'dashboard' | 'apps' | 'guide' | 'profile'>('home');
+  const [currentTab, setCurrentTab] = useState<'home' | 'generator' | 'dashboard' | 'apps' | 'guide' | 'profile' | 'providers'>('home');
 
   const [sermons, setSermons] = useState<Sermon[]>([]);
   const [currentSermon, setCurrentSermon] = useState<Sermon | null>(null);
@@ -602,6 +603,9 @@ export default function App() {
 
         {/* Tab: تطبيقاتنا — يراها الجميع ويديرها المسؤول فقط */}
         {currentTab === 'apps' && <AppsPage />}
+
+        {/* Tab: المزوّدون — خيارات الذكاء الاصطناعي لكل مستخدم + إعداد الإدارة العام */}
+        {currentTab === 'providers' && <ProvidersPage />}
 
       </main>
 

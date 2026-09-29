@@ -14,6 +14,7 @@ import {
   formatArabicErrorMessage,
   parseGeneratedJson,
 } from './src/lib/khutbahEngine';
+import { generateKhutbahText, getProvider } from './src/lib/providers';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -197,28 +198,53 @@ app.post('/api/parse-docx', async (req, res) => {
 // Generate Khutbah or Series
 app.post('/api/generate-khutbah', async (req, res) => {
   try {
-    const ai = getGeminiClient();
+    const body = (req.body || {}) as any;
+    const providerOverride = body.provider;
 
-    const { parts } = buildRequestParts(req.body as any);
-
-    // Generate Khutbah with automatic retry on transient errors and seamless model fallback
-    const textOutput = await generateContentWithRetryAndFallback(ai, {
-      contents: { parts },
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-        temperature: 0.7,
-        responseMimeType: 'application/json',
-        responseSchema: RESPONSE_SCHEMA,
-      },
-    });
+    let textOutput: string;
+    if (
+      providerOverride &&
+      typeof providerOverride.apiKey === 'string' &&
+      providerOverride.apiKey &&
+      getProvider(providerOverride.providerId)
+    ) {
+      // توليد عبر مزوّد/مفتاح يحدده المستخدم أو الإدارة
+      textOutput = await generateKhutbahText(
+        {
+          providerId: providerOverride.providerId,
+          apiKey: providerOverride.apiKey,
+          model: providerOverride.model,
+        },
+        body
+      );
+    } else {
+      const ai = getGeminiClient();
+      const { parts } = buildRequestParts(body);
+      // Generate Khutbah with automatic retry on transient errors and seamless model fallback
+      textOutput = await generateContentWithRetryAndFallback(ai, {
+        contents: { parts },
+        config: {
+          systemInstruction: SYSTEM_INSTRUCTION,
+          temperature: 0.7,
+          responseMimeType: 'application/json',
+          responseSchema: RESPONSE_SCHEMA,
+        },
+      });
+    }
 
     const generatedData = parseGeneratedJson(textOutput);
 
-    const finalizedSermon = finalizeSermon(generatedData, req.body as any);
+    const finalizedSermon = finalizeSermon(generatedData, body);
 
     res.json({ success: true, sermon: finalizedSermon });
   } catch (error: any) {
     console.error('Generation error:', error);
+    if (error?.message === 'PDF_GUARD') {
+      res.status(400).json({
+        error: 'لا يمكن معالجة ملفات PDF عبر هذا المزوّد؛ اختر مزوّد Gemini/Google أو ارفع المستند كنص.',
+      });
+      return;
+    }
     const friendlyError = formatArabicErrorMessage(error);
     res.status(500).json({
       error: friendlyError,

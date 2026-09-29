@@ -10,13 +10,14 @@ import {
   LogOut,
   Lock,
   Coins,
-  AppWindow
+  AppWindow,
+  Cpu
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePoints } from '../context/PointsContext';
 import { isNativeApp } from '../lib/admob';
 
-export type AppTab = 'home' | 'generator' | 'dashboard' | 'apps' | 'guide' | 'profile';
+export type AppTab = 'home' | 'generator' | 'dashboard' | 'apps' | 'guide' | 'profile' | 'providers';
 
 interface NavbarProps {
   currentTab: AppTab;
@@ -124,7 +125,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 )}
               </button>
 
-              {/* Tab 4: Our Apps (تطبيقاتنا — يراها الجميع) */}
+              {/* Tab: Our Apps (تطبيقاتنا — يراها الجميع) */}
               <button
                 onClick={() => setCurrentTab('apps')}
                 className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all cursor-pointer ${
@@ -135,6 +136,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <AppWindow className="w-4 h-4 text-amber-300" />
                 <span>تطبيقاتنا</span>
+              </button>
+
+              {/* Tab: Providers (المزوّدون — خيارات الذكاء الاصطناعي) */}
+              <button
+                onClick={() => setCurrentTab('providers')}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all cursor-pointer ${
+                  currentTab === 'providers'
+                    ? 'bg-emerald-700 text-white shadow-sm'
+                    : 'text-stone-300 hover:text-white hover:bg-stone-800'
+                }`}
+              >
+                <Cpu className="w-4 h-4 text-amber-300" />
+                <span>المزوّدون</span>
               </button>
 
               {/* Tab 5: Preacher Guide */}
@@ -296,7 +310,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         aria-label="التنقل السفلي للموبايل"
         className="fixed bottom-0 inset-x-0 z-40 bg-stone-950/95 backdrop-blur-xl border-t border-stone-800/90 text-stone-300 md:hidden shadow-[0_-8px_20px_rgba(0,0,0,0.35)] pb-[env(safe-area-inset-bottom)]"
       >
-        <div className="grid grid-cols-6 h-16 max-w-md mx-auto">
+        <div className="grid grid-cols-7 h-16 max-w-md mx-auto">
           
           {/* Tab 1: Home / Library */}
           <button
@@ -388,7 +402,26 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span className="text-[11px] leading-none">تطبيقاتنا</span>
           </button>
 
-          {/* Tab 5: Guide */}
+          {/* Tab 5: Providers */}
+          <button
+            type="button"
+            onClick={() => {
+              setCurrentTab('providers');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className={`flex flex-col items-center justify-center gap-1 transition-all active:scale-95 cursor-pointer ${
+              currentTab === 'providers'
+                ? 'text-emerald-400 font-bold'
+                : 'text-stone-400 hover:text-stone-200'
+            }`}
+          >
+            <div className={`p-1 rounded-xl transition-all ${currentTab === 'providers' ? 'bg-emerald-950/80 border border-emerald-600/40 text-emerald-300' : ''}`}>
+              <Cpu className="w-5 h-5" />
+            </div>
+            <span className="text-[11px] leading-none">المزوّد</span>
+          </button>
+
+          {/* Tab 6: Guide */}
           <button
             type="button"
             onClick={() => {

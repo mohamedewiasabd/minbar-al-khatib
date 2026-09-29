@@ -1,5 +1,6 @@
 {
   "firestore": {
+    "database": "ai-studio-khutbahcraft-519fc26c-c7b7-46e1-950b-9ad5d5b26399",
     "rules": "firestore.rules"
   },
   "hosting": [
