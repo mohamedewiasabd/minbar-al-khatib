@@ -31,6 +31,10 @@ export interface AppInput {
   name: string;
   details: string;
   packageName: string;
+  version?: string;
+  isPaid?: boolean;
+  paidPackageName?: string;
+  alternativeAppId?: string;
 }
 
 /** إضافة تطبيق جديد (يسمح بها المسؤول فقط — القواعد تفرض ذلك أيضاً) */
@@ -40,6 +44,10 @@ export async function addApp(input: AppInput): Promise<string> {
     name: input.name.trim(),
     details: input.details.trim(),
     packageName: input.packageName.trim(),
+    version: (input.version || '').trim(),
+    isPaid: Boolean(input.isPaid),
+    paidPackageName: (input.paidPackageName || '').trim(),
+    alternativeAppId: (input.alternativeAppId || '').trim(),
     createdAt: now,
     updatedAt: now,
   });
@@ -52,6 +60,10 @@ export async function updateApp(id: string, input: AppInput): Promise<void> {
     name: input.name.trim(),
     details: input.details.trim(),
     packageName: input.packageName.trim(),
+    version: (input.version || '').trim(),
+    isPaid: Boolean(input.isPaid),
+    paidPackageName: (input.paidPackageName || '').trim(),
+    alternativeAppId: (input.alternativeAppId || '').trim(),
     updatedAt: new Date().toISOString(),
   });
 }

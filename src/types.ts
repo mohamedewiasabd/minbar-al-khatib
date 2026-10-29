@@ -112,6 +112,14 @@ export interface AppInfo {
   name: string;
   details: string;
   packageName: string;
+  /** الإصدار الحالي للتطبيق (مثال: 1.15.0) */
+  version?: string;
+  /** هل للتطبيق نسخة مدفوعة/Pro؟ */
+  isPaid?: boolean;
+  /** اسم حزمة النسخة المدفوعة إن كانت منفصلة (اختياري) */
+  paidPackageName?: string;
+  /** معرّف التطبيق البديل من قائمة تطبيقاتنا (لو أُغلق واستُبدل بآخر) */
+  alternativeAppId?: string;
   createdAt: string;
   updatedAt?: string;
 }

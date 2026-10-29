@@ -12,6 +12,8 @@ import {
   Loader2,
   AlertCircle,
   ExternalLink,
+  Crown,
+  Repeat,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { AppInfo } from '../types';
@@ -19,7 +21,15 @@ import { subscribeToApps, addApp, updateApp, removeApp, AppInput } from '../serv
 import { openExternalApp, supportsNativeOpen } from '../lib/appLauncher';
 
 const PACKAGE_REGEX = /^[A-Za-z0-9_]+(\.[A-Za-z0-9_]+)+$/;
-const emptyForm: AppInput = { name: '', details: '', packageName: '' };
+const emptyForm: AppInput = {
+  name: '',
+  details: '',
+  packageName: '',
+  version: '',
+  isPaid: false,
+  paidPackageName: '',
+  alternativeAppId: '',
+};
 
 const AppsPage: React.FC = () => {
   const { isAdmin, user, openLoginModal } = useAuth();
@@ -50,6 +60,12 @@ const AppsPage: React.FC = () => {
     if (!form.packageName.trim()) return 'أدخل اسم الحزمة (Package Name).';
     if (!PACKAGE_REGEX.test(form.packageName.trim())) {
       return 'اسم الحزمة غير صالح — مثال صحيح: com.example.app';
+    }
+    if (form.paidPackageName?.trim() && !PACKAGE_REGEX.test(form.paidPackageName.trim())) {
+      return 'اسم حزمة النسخة المدفوعة غير صالح — مثال صحيح: com.example.app.pro';
+    }
+    if (form.alternativeAppId && form.alternativeAppId === editingId) {
+      return 'لا يمكن اختيار التطبيق نفسه كتطبيق بديل.';
     }
     return null;
   };
@@ -85,7 +101,15 @@ const AppsPage: React.FC = () => {
 
   const startEdit = (app: AppInfo) => {
     setEditingId(app.id);
-    setForm({ name: app.name, details: app.details, packageName: app.packageName });
+    setForm({
+      name: app.name,
+      details: app.details,
+      packageName: app.packageName,
+      version: app.version || '',
+      isPaid: Boolean(app.isPaid),
+      paidPackageName: app.paidPackageName || '',
+      alternativeAppId: app.alternativeAppId || '',
+    });
     setFormError(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -110,16 +134,18 @@ const AppsPage: React.FC = () => {
     }
   };
 
-  const handleOpen = async (app: AppInfo) => {
-    setOpeningId(app.id);
+  const handleOpenPackage = async (packageName: string, key: string) => {
+    setOpeningId(key);
     try {
-      await openExternalApp(app.packageName);
+      await openExternalApp(packageName);
     } catch (err) {
       console.error('Open app error:', err);
     } finally {
       setOpeningId(null);
     }
   };
+
+  const handleOpen = (app: AppInfo) => handleOpenPackage(app.packageName, app.id);
 
   return (
     <div className="space-y-8">
@@ -194,6 +220,48 @@ const AppsPage: React.FC = () => {
                   />
                 </div>
               </div>
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-cairo font-bold text-stone-700 mb-1.5">
+                    الإصدار <span className="text-[10px] text-stone-400">(اختياري)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={form.version || ''}
+                    onChange={(e) => {
+                      setForm((f) => ({ ...f, version: e.target.value }));
+                      setFormError(null);
+                    }}
+                    placeholder="مثال: 1.15.0"
+                    dir="ltr"
+                    className="w-full rounded-xl border border-stone-300 bg-stone-50 px-4 py-2.5 text-sm text-stone-800 text-left font-mono focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-cairo font-bold text-stone-700 mb-1.5">
+                    التطبيق البديل <span className="text-[10px] text-stone-400">(لو أُغلق واستُبدل بآخر)</span>
+                  </label>
+                  <select
+                    value={form.alternativeAppId || ''}
+                    onChange={(e) => {
+                      setForm((f) => ({ ...f, alternativeAppId: e.target.value }));
+                      setFormError(null);
+                    }}
+                    className="w-full rounded-xl border border-stone-300 bg-stone-50 px-4 py-2.5 text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                  >
+                    <option value="">بدون تطبيق بديل</option>
+                    {apps
+                      .filter((a) => a.id !== editingId)
+                      .map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-cairo font-bold text-stone-700 mb-1.5">تفاصيل مختصرة</label>
                 <textarea
@@ -206,6 +274,43 @@ const AppsPage: React.FC = () => {
                   rows={2}
                   className="w-full rounded-xl border border-stone-300 bg-stone-50 px-4 py-2.5 text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-emerald-600 resize-none"
                 />
+              </div>
+
+              <div className="rounded-xl border border-amber-200 bg-amber-50/60 px-4 py-3 space-y-3">
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(form.isPaid)}
+                    onChange={(e) => {
+                      setForm((f) => ({ ...f, isPaid: e.target.checked }));
+                      setFormError(null);
+                    }}
+                    className="w-4 h-4 accent-amber-600"
+                  />
+                  <span className="flex items-center gap-1.5 text-xs font-cairo font-bold text-amber-900">
+                    <Crown className="w-4 h-4 text-amber-600" />
+                    للتطبيق نسخة مدفوعة (Pro)
+                  </span>
+                </label>
+                {form.isPaid && (
+                  <div>
+                    <label className="block text-[11px] font-cairo font-bold text-stone-600 mb-1.5">
+                      اسم حزمة النسخة المدفوعة{' '}
+                      <span className="text-[10px] text-stone-400">(اتركه فارغاً إن كانت نفس الحزمة)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={form.paidPackageName || ''}
+                      onChange={(e) => {
+                        setForm((f) => ({ ...f, paidPackageName: e.target.value }));
+                        setFormError(null);
+                      }}
+                      placeholder="com.example.app.pro"
+                      dir="ltr"
+                      className="w-full rounded-xl border border-amber-300 bg-white px-4 py-2.5 text-sm text-stone-800 text-left font-mono focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+                )}
               </div>
 
               {formError && (
@@ -257,6 +362,16 @@ const AppsPage: React.FC = () => {
                       <div className="text-[11px] text-stone-500 font-mono truncate" dir="ltr">
                         {app.packageName}
                       </div>
+                      {(app.version || app.isPaid) && (
+                        <div className="text-[10px] text-stone-400 flex items-center gap-2 mt-0.5">
+                          {app.version && (
+                            <span>
+                              الإصدار <span dir="ltr" className="font-mono">{app.version}</span>
+                            </span>
+                          )}
+                          {app.isPaid && <span className="text-amber-700 font-bold">Pro</span>}
+                        </div>
+                      )}
                     </div>
                     <button
                       type="button"
@@ -316,55 +431,122 @@ const AppsPage: React.FC = () => {
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {apps.map((app) => (
-              <button
-                key={app.id}
-                type="button"
-                onClick={() => handleOpen(app)}
-                disabled={openingId === app.id}
-                className="group text-right bg-white border border-stone-200 hover:border-emerald-500 hover:shadow-xl rounded-3xl p-5 transition-all duration-200 active:scale-[0.98] text-stone-900 cursor-pointer flex flex-col"
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-800 text-amber-300 flex items-center justify-center shadow-md shadow-emerald-100 border border-emerald-500/30 shrink-0">
-                    <Package className="w-6 h-6" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-cairo font-extrabold text-base truncate">{app.name}</div>
-                    <div className="text-[10px] text-stone-400 font-mono truncate" dir="ltr">
-                      {app.packageName}
+            {apps.map((app) => {
+              const altApp = app.alternativeAppId
+                ? apps.find((a) => a.id === app.alternativeAppId)
+                : undefined;
+              const hasSeparatePaid =
+                Boolean(app.isPaid) &&
+                Boolean(app.paidPackageName) &&
+                app.paidPackageName !== app.packageName;
+              return (
+                <div
+                  key={app.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleOpen(app)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleOpen(app);
+                    }
+                  }}
+                  className="group text-right bg-white border border-stone-200 hover:border-emerald-500 hover:shadow-xl rounded-3xl p-5 transition-all duration-200 active:scale-[0.98] text-stone-900 cursor-pointer flex flex-col"
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-800 text-amber-300 flex items-center justify-center shadow-md shadow-emerald-100 border border-emerald-500/30 shrink-0">
+                      <Package className="w-6 h-6" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <div className="font-cairo font-extrabold text-base truncate">{app.name}</div>
+                        {app.isPaid && (
+                          <span className="inline-flex items-center gap-0.5 bg-amber-100 text-amber-800 border border-amber-300 rounded-full px-1.5 py-0.5 text-[9px] font-bold shrink-0">
+                            <Crown className="w-2.5 h-2.5" />
+                            Pro
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-stone-400 font-mono truncate" dir="ltr">
+                        {app.packageName}
+                      </div>
+                      {app.version && (
+                        <div className="text-[10px] text-stone-500 font-medium">
+                          الإصدار <span dir="ltr" className="font-mono">{app.version}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
 
-                <p className="text-xs text-stone-500 leading-relaxed flex-1 mb-4 line-clamp-3">
-                  {app.details}
-                </p>
+                  <p className="text-xs text-stone-500 leading-relaxed flex-1 mb-4 line-clamp-3">
+                    {app.details}
+                  </p>
 
-                <div className="flex items-center justify-between pt-3 border-t border-stone-100">
-                  <span className="inline-flex items-center gap-1.5 text-[11px] font-cairo font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-1.5 transition-all group-hover:bg-emerald-700 group-hover:text-white group-hover:border-emerald-700">
-                    {openingId === app.id ? (
-                      <>
+                  {hasSeparatePaid && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenPackage(app.paidPackageName as string, `paid-${app.id}`);
+                      }}
+                      disabled={openingId === `paid-${app.id}`}
+                      className="mb-3 inline-flex items-center justify-center gap-1.5 text-[11px] font-cairo font-bold text-amber-800 bg-amber-50 border border-amber-200 hover:bg-amber-100 rounded-lg px-2.5 py-1.5 transition-all active:scale-95 cursor-pointer disabled:opacity-60"
+                    >
+                      {openingId === `paid-${app.id}` ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>فتح...</span>
-                      </>
-                    ) : isNative ? (
-                      <>
-                        <Play className="w-3.5 h-3.5" />
-                        <span>فتح التطبيق</span>
-                      </>
-                    ) : (
-                      <>
-                        <ExternalLink className="w-3.5 h-3.5" />
-                        <span>عرض في جرّوج بلاي</span>
-                      </>
-                    )}
-                  </span>
-                  <span className="text-[10px] text-stone-400 font-medium" dir="ltr">
-                    Google Play
-                  </span>
+                      ) : (
+                        <Crown className="w-3.5 h-3.5" />
+                      )}
+                      فتح النسخة المدفوعة (Pro)
+                    </button>
+                  )}
+
+                  {altApp && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenPackage(altApp.packageName, `alt-${altApp.id}`);
+                      }}
+                      disabled={openingId === `alt-${altApp.id}`}
+                      className="mb-3 inline-flex items-center justify-center gap-1.5 text-[11px] font-cairo font-bold text-violet-700 bg-violet-50 border border-violet-200 hover:bg-violet-100 rounded-lg px-2.5 py-1.5 transition-all active:scale-95 cursor-pointer disabled:opacity-60"
+                      title="تطبيق بديل أو نسخة أحدث"
+                    >
+                      {openingId === `alt-${altApp.id}` ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Repeat className="w-3.5 h-3.5" />
+                      )}
+                      التطبيق البديل: {altApp.name}
+                    </button>
+                  )}
+
+                  <div className="flex items-center justify-between pt-3 border-t border-stone-100">
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-cairo font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-1.5 transition-all group-hover:bg-emerald-700 group-hover:text-white group-hover:border-emerald-700">
+                      {openingId === app.id ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>فتح...</span>
+                        </>
+                      ) : isNative ? (
+                        <>
+                          <Play className="w-3.5 h-3.5" />
+                          <span>فتح التطبيق</span>
+                        </>
+                      ) : (
+                        <>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>عرض في جرّوج بلاي</span>
+                        </>
+                      )}
+                    </span>
+                    <span className="text-[10px] text-stone-400 font-medium" dir="ltr">
+                      Google Play
+                    </span>
+                  </div>
                 </div>
-              </button>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
