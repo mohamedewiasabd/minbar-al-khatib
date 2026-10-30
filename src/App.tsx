@@ -32,12 +32,13 @@ import { ProfilePage } from './components/ProfilePage';
 import { PointsGateModal } from './components/PointsGateModal';
 import AppsPage from './components/AppsPage';
 import ProvidersPage from './components/ProvidersPage';
+import DeveloperPage from './components/DeveloperPage';
 
 export default function App() {
   const { isAdmin, user, openLoginModal } = useAuth();
   const { isNative, adMobReady, showBanner } = useAdMob();
   const { points, watchRewardedForPoints, spendPointsForGeneration, refundPoints } = usePoints();
-  const [currentTab, setCurrentTab] = useState<'home' | 'generator' | 'dashboard' | 'apps' | 'guide' | 'profile' | 'providers'>('home');
+  const [currentTab, setCurrentTab] = useState<'home' | 'generator' | 'dashboard' | 'apps' | 'guide' | 'profile' | 'providers' | 'developer'>('home');
 
   const [sermons, setSermons] = useState<Sermon[]>([]);
   const [currentSermon, setCurrentSermon] = useState<Sermon | null>(null);
@@ -626,11 +627,32 @@ export default function App() {
               setCurrentTab('generator');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
+            onOpenDeveloper={() => {
+              setCurrentTab('developer');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
           />
         )}
 
         {/* Tab: تطبيقاتنا — يراها الجميع ويديرها المسؤول فقط */}
-        {currentTab === 'apps' && <AppsPage />}
+        {currentTab === 'apps' && (
+          <AppsPage
+            onOpenDeveloper={() => {
+              setCurrentTab('developer');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        )}
+
+        {/* صفحة المطور — تعريف وتواصل وتبرع ورقم الإصدار */}
+        {currentTab === 'developer' && (
+          <DeveloperPage
+            onBack={() => {
+              setCurrentTab('apps');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        )}
 
         {/* Tab: المزوّدون — خيارات الذكاء الاصطناعي لكل مستخدم + إعداد الإدارة العام */}
         {currentTab === 'providers' && <ProvidersPage />}

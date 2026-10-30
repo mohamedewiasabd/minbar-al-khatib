@@ -17,7 +17,16 @@ import { useAuth } from '../context/AuthContext';
 import { usePoints } from '../context/PointsContext';
 import { isNativeApp } from '../lib/admob';
 
-export type AppTab = 'home' | 'generator' | 'dashboard' | 'apps' | 'guide' | 'profile' | 'providers';
+export type AppTab =
+  | 'home'
+  | 'generator'
+  | 'dashboard'
+  | 'apps'
+  | 'guide'
+  | 'profile'
+  | 'providers'
+  /** صفحة المطور — تُفتح من «تطبيقاتنا» أو «حسابي» وليست تبويباً في الشريط */
+  | 'developer';
 
 interface NavbarProps {
   currentTab: AppTab;

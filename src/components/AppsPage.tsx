@@ -14,6 +14,7 @@ import {
   ExternalLink,
   Crown,
   Repeat,
+  UserRound,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { AppInfo } from '../types';
@@ -31,7 +32,12 @@ const emptyForm: AppInput = {
   alternativeAppId: '',
 };
 
-const AppsPage: React.FC = () => {
+interface AppsPageProps {
+  /** فتح صفحة المطور (تعريف + تواصل + تبرع + رقم الإصدار) */
+  onOpenDeveloper?: () => void;
+}
+
+const AppsPage: React.FC<AppsPageProps> = ({ onOpenDeveloper }) => {
   const { isAdmin, user, openLoginModal } = useAuth();
   const [apps, setApps] = useState<AppInfo[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -168,6 +174,16 @@ const AppsPage: React.FC = () => {
             <p className="text-[11px] text-amber-300/80 font-medium">
               هذه نسخة المتصفح: سيتم توجيهك إلى الصفحة على Google Play.
             </p>
+          )}
+          {onOpenDeveloper && (
+            <button
+              type="button"
+              onClick={onOpenDeveloper}
+              className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-400/40 rounded-xl px-3.5 py-2 text-xs font-cairo font-bold transition-all active:scale-95 cursor-pointer shadow-sm"
+            >
+              <UserRound className="w-4 h-4 text-amber-300" />
+              <span>صفحة المطور</span>
+            </button>
           )}
         </div>
       </div>

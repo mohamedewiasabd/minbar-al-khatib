@@ -72,7 +72,11 @@ if [ "$skip_bump" = "0" ]; then
   if [ -f ios/App/App.xcodeproj/project.pbxproj ]; then
     sed -i -E "s/MARKETING_VERSION = [^;]+;/MARKETING_VERSION = ${TAURI_WRITTEN};/g" ios/App/App.xcodeproj/project.pbxproj
   fi
-  ok "Sync: android + tauri conf/cargo + ios pbxproj → ${VERSION}"
+  # رقم الإصدار الظاهر داخل التطبيق (صفحة المطور)
+  if [ -f src/lib/appMeta.ts ]; then
+    sed -i -E "s/APP_VERSION = '[^']*'/APP_VERSION = '${TAURI_WRITTEN}'/" src/lib/appMeta.ts
+  fi
+  ok "Sync: android + tauri conf/cargo + ios pbxproj + appMeta → ${VERSION}"
 else
   log "الخطوة 0 — تصعيد الإصدار متخطَّى (MINBAR_RELEASE/MINBAR_SKIP_BUMP/MINBAR_FETCH_ONLY) — نسخة ثابتة ${VERSION}"
 fi

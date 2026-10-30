@@ -12,6 +12,7 @@ import {
   History,
   Mail,
   Trash2,
+  UserRound,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePoints } from '../context/PointsContext';
@@ -20,9 +21,11 @@ import { isNativeApp } from '../lib/admob';
 
 interface ProfilePageProps {
   onGoToGenerator?: () => void;
+  /** فتح صفحة المطور (تعريف + تواصل + تبرع + رقم الإصدار) */
+  onOpenDeveloper?: () => void;
 }
 
-export const ProfilePage: React.FC<ProfilePageProps> = ({ onGoToGenerator }) => {
+export const ProfilePage: React.FC<ProfilePageProps> = ({ onGoToGenerator, onOpenDeveloper }) => {
   const { user, isAdmin, logout, openLoginModal, deleteAccount } = useAuth();
   const { points, profile, transactions, ready, watchRewardedForPoints } = usePoints();
   const [watching, setWatching] = useState(false);
@@ -137,14 +140,26 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onGoToGenerator }) => 
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={logout}
-            className="flex items-center gap-1.5 bg-stone-800 hover:bg-red-900/60 border border-stone-600 text-stone-200 hover:text-white px-3 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shrink-0"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>تسجيل الخروج</span>
-          </button>
+          <div className="flex items-center gap-2 flex-wrap shrink-0">
+            {onOpenDeveloper && (
+              <button
+                type="button"
+                onClick={onOpenDeveloper}
+                className="flex items-center gap-1.5 bg-emerald-800/80 hover:bg-emerald-700 border border-emerald-500/50 text-emerald-100 hover:text-white px-3 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
+              >
+                <UserRound className="w-4 h-4 text-amber-300" />
+                <span>صفحة المطور</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={logout}
+              className="flex items-center gap-1.5 bg-stone-800 hover:bg-red-900/60 border border-stone-600 text-stone-200 hover:text-white px-3 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shrink-0"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>تسجيل الخروج</span>
+            </button>
+          </div>
         </div>
       </div>
 
