@@ -33,12 +33,16 @@ import { PointsGateModal } from './components/PointsGateModal';
 import AppsPage from './components/AppsPage';
 import ProvidersPage from './components/ProvidersPage';
 import DeveloperPage from './components/DeveloperPage';
+import JumuahCard from './components/JumuahCard';
+import { useSermonLibrary } from './hooks/useSermonLibrary';
 
 export default function App() {
   const { isAdmin, user, openLoginModal } = useAuth();
   const { isNative, adMobReady, showBanner } = useAdMob();
   const { points, watchRewardedForPoints, spendPointsForGeneration, refundPoints } = usePoints();
+  const library = useSermonLibrary();
   const [currentTab, setCurrentTab] = useState<'home' | 'generator' | 'dashboard' | 'apps' | 'guide' | 'profile' | 'providers' | 'developer'>('home');
+  const [offlineOnly, setOfflineOnly] = useState(false);
 
   const [sermons, setSermons] = useState<Sermon[]>([]);
   const [currentSermon, setCurrentSermon] = useState<Sermon | null>(null);
@@ -303,6 +307,7 @@ export default function App() {
         length: options.length || targetSermon.length || 'medium',
         complexity: options.complexity || targetSermon.complexity || 'simple',
         tone: options.tone || targetSermon.tone || 'exhortative',
+        occasion: targetSermon.occasion || 'normal',
         isSeries,
         seriesPartsCount: partsCount,
         customInstructions: promptInstructions,
@@ -408,6 +413,14 @@ export default function App() {
     if (currentSermon && currentSermon.id === sermon.id) {
       setCurrentSermon((prev) => (prev ? { ...prev, viewsCount: (prev.viewsCount || 0) + 1 } : null));
     }
+  };
+
+  /** فتح خطبة عشوائية من المكتبة لتنوّع القراءة */
+  const handleRandomSermon = () => {
+    if (sermons.length === 0) return;
+    const random = sermons[Math.floor(Math.random() * sermons.length)];
+    setOfflineOnly(false);
+    void handleReadSermon(random);
   };
 
   // Download a Sermon directly or from reader
@@ -530,8 +543,20 @@ export default function App() {
         
         {/* Tab 1: Home Public Showcase (Separated Ready Sermons by Category with Public Stats) */}
         {currentTab === 'home' && (
+          <>
+          <JumuahCard
+            sermonCount={sermons.length}
+            offlineCount={library.offlineSermons.length}
+            onRandomSermon={handleRandomSermon}
+            onOpenOffline={() => {
+              setOfflineOnly(true);
+              window.scrollTo({ top: 320, behavior: 'smooth' });
+            }}
+          />
           <HomePublicShowcase
             sermons={sermons}
+            offlineOnly={offlineOnly}
+            onToggleOffline={setOfflineOnly}
             onReadSermon={handleReadSermon}
             onDownloadSermon={(sermon, format, part) => handleDownloadSermon(sermon, format, part)}
             onOpenTeleprompter={(sermon) => handleOpenTeleprompter(sermon)}
@@ -543,6 +568,7 @@ export default function App() {
             onRegenerateSermon={handleOpenRegenerateModal}
             onDeleteSermon={handleDeleteSermon}
           />
+          </>
         )}
 
         {/* Tab 2: Generator & Current Sermon Workspace */}

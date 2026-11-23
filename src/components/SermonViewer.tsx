@@ -21,7 +21,9 @@ import {
   FolderTree,
   RotateCw,
   Trash2,
-  Lock
+  Lock,
+  Heart,
+  WifiOff
 } from 'lucide-react';
 import { Sermon, SeriesPart } from '../types';
 import {
@@ -31,6 +33,9 @@ import {
   triggerPrintWindow,
 } from '../utils/exportHelpers';
 import { useAuth } from '../context/AuthContext';
+import { OCCASION_MAP } from '../lib/khutbahEngine';
+import { useSermonLibrary } from '../hooks/useSermonLibrary';
+import { shareSermon, ShareResult } from '../lib/share';
 
 
 interface SermonViewerProps {
@@ -51,7 +56,9 @@ export const SermonViewer: React.FC<SermonViewerProps> = ({
   onDelete,
 }) => {
   const { isAdmin, user, openLoginModal } = useAuth();
+  const library = useSermonLibrary();
   const [copied, setCopied] = useState(false);
+  const [shareResult, setShareResult] = useState<ShareResult | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'first' | 'second' | 'supp' | 'sources'>('all');
   const [selectedPartIndex, setSelectedPartIndex] = useState<number>(0);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -81,6 +88,14 @@ export const SermonViewer: React.FC<SermonViewerProps> = ({
     navigator.clipboard.writeText(fullContent);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
+  };
+
+  const handleShare = async () => {
+    const result = await shareSermon(sermon, activePart);
+    if (result !== 'failed') {
+      setShareResult(result);
+      window.setTimeout(() => setShareResult(null), 2500);
+    }
   };
 
   const getComplexityLabel = (c: string) => {
@@ -123,6 +138,11 @@ export const SermonViewer: React.FC<SermonViewerProps> = ({
               <span className="bg-amber-600/70 text-amber-100 px-3 py-1 rounded-full font-semibold border border-amber-400/30">
                 {getToneLabel(sermon.tone)}
               </span>
+              {sermon.occasion && sermon.occasion !== 'normal' && (
+                <span className="bg-sky-800/70 text-sky-100 px-3 py-1 rounded-full font-semibold border border-sky-400/30">
+                  {OCCASION_MAP[sermon.occasion]?.label || sermon.occasion}
+                </span>
+              )}
               {sermon.isSeries && (
                 <span className="bg-stone-800/80 text-amber-300 px-3 py-1 rounded-full font-bold flex items-center gap-1 border border-stone-700">
                   <Layers className="w-3.5 h-3.5" />
@@ -325,6 +345,55 @@ export const SermonViewer: React.FC<SermonViewerProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* المفضلة */}
+            <button
+              type="button"
+              onClick={() => library.toggleFavorite(sermon.id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-xs transition-all border ${
+                library.isFavorite(sermon.id)
+                  ? 'bg-rose-50 border-rose-300 text-rose-700'
+                  : 'bg-white border-stone-200 text-stone-600 hover:border-rose-300 hover:text-rose-700'
+              }`}
+              title={library.isFavorite(sermon.id) ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة'}
+            >
+              <Heart className={`w-3.5 h-3.5 ${library.isFavorite(sermon.id) ? 'fill-rose-500 text-rose-500' : ''}`} />
+              <span className="hidden sm:inline">المفضلة</span>
+            </button>
+
+            {/* مشاركة */}
+            <button
+              type="button"
+              onClick={handleShare}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-xs transition-all border ${
+                shareResult
+                  ? 'bg-emerald-600 border-emerald-600 text-white'
+                  : 'bg-white border-stone-200 text-stone-600 hover:border-emerald-400 hover:text-emerald-700'
+              }`}
+              title="مشاركة الخطبة أو نسخ رابطها"
+            >
+              {shareResult ? <Check className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}
+              <span className="hidden sm:inline">{shareResult === 'copied' ? 'تم النسخ' : shareResult === 'shared' ? 'تمت المشاركة' : 'مشاركة'}</span>
+            </button>
+
+            {/* حفظ دون اتصال */}
+            <button
+              type="button"
+              onClick={() =>
+                library.isOfflineSaved(sermon.id)
+                  ? library.removeOfflineSermon(sermon.id)
+                  : library.saveOfflineSermon(sermon)
+              }
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-xs transition-all border ${
+                library.isOfflineSaved(sermon.id)
+                  ? 'bg-emerald-50 border-emerald-400 text-emerald-700'
+                  : 'bg-white border-stone-200 text-stone-600 hover:border-emerald-400 hover:text-emerald-700'
+              }`}
+              title={library.isOfflineSaved(sermon.id) ? 'حذف النسخة المحلية' : 'حفظ الخطبة للقراءة دون اتصال'}
+            >
+              <WifiOff className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{library.isOfflineSaved(sermon.id) ? 'محفوظة محلياً' : 'حفظ دون اتصال'}</span>
+            </button>
+
             <button
               type="button"
               onClick={handleCopy}

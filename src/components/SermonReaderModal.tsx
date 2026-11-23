@@ -17,10 +17,13 @@ import {
   Edit3,
   RotateCw,
   Trash2,
-  Lock
+  Lock,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import { Sermon, SeriesPart } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { isSpeechSupported, speakText, stopSpeech } from '../lib/tts';
 
 
 interface SermonReaderModalProps {
@@ -50,6 +53,7 @@ export const SermonReaderModal: React.FC<SermonReaderModalProps> = ({
   );
   const [fontSize, setFontSize] = useState<'normal' | 'large' | 'xlarge'>('large');
   const [copied, setCopied] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
 
@@ -61,6 +65,9 @@ export const SermonReaderModal: React.FC<SermonReaderModalProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
+
+  // إيقاف القراءة بصوت عالٍ عند إغلاق النافذة
+  useEffect(() => () => stopSpeech(), []);
 
   // Sync to externally requested part (e.g. opened from Home/Dashboard series list)
   useEffect(() => {
@@ -86,6 +93,21 @@ export const SermonReaderModal: React.FC<SermonReaderModalProps> = ({
     normal: 'text-lg sm:text-xl leading-loose',
     large: 'text-xl sm:text-2xl leading-[2.2]',
     xlarge: 'text-2xl sm:text-3xl leading-[2.4]',
+  };
+
+  const toggleReadAloud = () => {
+    if (speaking) {
+      stopSpeech();
+      setSpeaking(false);
+      return;
+    }
+    const text = `${currentTitle}\n\n${intro}\n\n${firstKhutbah}\n\n${pauseAdvice}\n\n${secondKhutbah}\n\n${supplication}`;
+    const started = speakText(text, {
+      rate: 0.9,
+      onEnd: () => setSpeaking(false),
+      onError: () => setSpeaking(false),
+    });
+    setSpeaking(started);
   };
 
   const handleCopyText = () => {
@@ -261,6 +283,22 @@ export const SermonReaderModal: React.FC<SermonReaderModalProps> = ({
               </button>
             </div>
 
+            {/* قراءة الخطبة بصوت عالٍ */}
+            {isSpeechSupported() && (
+              <button
+                onClick={toggleReadAloud}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all ${
+                  speaking
+                    ? 'bg-amber-500 hover:bg-amber-600 text-stone-900'
+                    : 'bg-emerald-800 hover:bg-emerald-900 text-white'
+                }`}
+                title={speaking ? 'إيقاف القراءة' : 'استماع إلى الخطبة بصوت عالٍ'}
+              >
+                {speaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                <span>{speaking ? 'إيقاف القراءة' : 'استماع'}</span>
+              </button>
+            )}
+
             {/* Copy Button */}
             <button
               onClick={handleCopyText}
@@ -309,7 +347,11 @@ export const SermonReaderModal: React.FC<SermonReaderModalProps> = ({
             {sermon.seriesParts.map((part) => (
               <button
                 key={part.partNumber}
-                onClick={() => setSelectedPart(part)}
+                onClick={() => {
+                  stopSpeech();
+                  setSpeaking(false);
+                  setSelectedPart(part);
+                }}
                 className={`px-3 py-1 text-xs font-semibold rounded-lg whitespace-nowrap transition-all ${
                   selectedPart?.partNumber === part.partNumber
                     ? 'bg-emerald-700 text-white shadow-sm'

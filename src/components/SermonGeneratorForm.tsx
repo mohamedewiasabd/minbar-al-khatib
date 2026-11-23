@@ -18,7 +18,8 @@ import {
   Tag,
   Lock,
   ShieldCheck,
-  Coins
+  Coins,
+  CalendarDays
 } from 'lucide-react';
 import {
   GeneratorMode,
@@ -26,8 +27,10 @@ import {
   SermonComplexity,
   SermonTone,
   SermonDialect,
+  SermonOccasion,
   GenerateRequest,
 } from '../types';
+import { OCCASION_MAP } from '../lib/khutbahEngine';
 import { processUploadedFile, ProcessedFile } from '../utils/fileHelpers';
 import { useAuth } from '../context/AuthContext';
 import { usePoints } from '../context/PointsContext';
@@ -79,6 +82,7 @@ export const SermonGeneratorForm: React.FC<SermonGeneratorFormProps> = ({
   const [length, setLength] = useState<SermonLength>('medium');
   const [complexity, setComplexity] = useState<SermonComplexity>('simple');
   const [tone, setTone] = useState<SermonTone>('exhortative');
+  const [occasion, setOccasion] = useState<SermonOccasion>('normal');
   const [dialect, setDialect] = useState<SermonDialect>('msa');
   const [isSeries, setIsSeries] = useState(false);
   const [seriesPartsCount, setSeriesPartsCount] = useState<number>(3);
@@ -100,6 +104,7 @@ export const SermonGeneratorForm: React.FC<SermonGeneratorFormProps> = ({
       if (initialValues.length !== undefined) setLength(initialValues.length);
       if (initialValues.complexity !== undefined) setComplexity(initialValues.complexity);
       if (initialValues.tone !== undefined) setTone(initialValues.tone);
+      if (initialValues.occasion !== undefined) setOccasion(initialValues.occasion);
       if (initialValues.dialect !== undefined) setDialect(initialValues.dialect);
       if (initialValues.isSeries !== undefined) setIsSeries(initialValues.isSeries);
       if (initialValues.seriesPartsCount !== undefined) setSeriesPartsCount(initialValues.seriesPartsCount);
@@ -176,6 +181,7 @@ export const SermonGeneratorForm: React.FC<SermonGeneratorFormProps> = ({
       length,
       complexity,
       tone,
+      occasion,
       isSeries: mode === 'book_series' ? true : isSeries,
       seriesPartsCount: mode === 'book_series' ? seriesPartsCount : (isSeries ? seriesPartsCount : undefined),
       customInstructions: customInstructions.trim(),
@@ -534,6 +540,28 @@ export const SermonGeneratorForm: React.FC<SermonGeneratorFormProps> = ({
               </p>
             </div>
           )}
+        </div>
+
+        {/* مناسبة الخطبة — تنوّع الخطاب بحسب الوقت والمناسبة */}
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-3.5 sm:p-4">
+          <label className="flex items-center gap-1.5 text-xs font-bold text-stone-800 mb-2">
+            <CalendarDays className="w-4 h-4 text-emerald-600" />
+            مناسبة الخطبة:
+          </label>
+          <select
+            value={occasion}
+            onChange={(e) => setOccasion(e.target.value as SermonOccasion)}
+            className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 bg-white text-xs sm:text-sm font-semibold text-stone-800 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+          >
+            {Object.entries(OCCASION_MAP).map(([id, item]) => (
+              <option key={id} value={id}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-[11px] text-stone-500 mt-1.5">
+            {OCCASION_MAP[occasion]?.guidance}
+          </p>
         </div>
 
         {/* Parameters Grid: Length, Complexity, Tone */}

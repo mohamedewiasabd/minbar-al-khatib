@@ -3,7 +3,7 @@
  * يتم تحديثها تلقائياً مع كل إصدار من الخطوة 0 في script/release-all.sh
  * (لا تعدّلها يدوياً — القيمة تُزامَن مع versionName في android/app/build.gradle).
  */
-export const APP_VERSION = '1.16.0';
+export const APP_VERSION = '1.17.0';
 
 export const APP_NAME = 'منبر الخطيب الذكي';
 

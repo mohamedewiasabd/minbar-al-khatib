@@ -4,6 +4,17 @@ export type SermonTone = 'exhortative' | 'guidance' | 'foundational' | 'inspirat
 export type SermonDialect = 'msa' | 'egyptian' | 'levantine' | 'gulf' | 'iraqi' | 'maghreb' | 'yemeni' | 'sudanese';
 export type GeneratorMode = 'topic' | 'document' | 'book_series';
 
+/** مناسبات الخطبة التي تُنوّع مضمونها وخطابها */
+export type SermonOccasion =
+  | 'normal'
+  | 'ramadan'
+  | 'hajj'
+  | 'eid'
+  | 'funeral'
+  | 'wedding'
+  | 'exam'
+  | 'crisis';
+
 export interface QuranCitation {
   verse: string;
   surah: string;
@@ -42,6 +53,8 @@ export interface Sermon {
   length: SermonLength;
   complexity: SermonComplexity;
   tone: SermonTone;
+  /** المناسبة التي تُناسبها الخطبة (اختياري) */
+  occasion?: SermonOccasion;
   isSeries: boolean;
   totalSeriesParts?: number;
   currentSeriesPartIndex?: number;
@@ -82,6 +95,8 @@ export interface GenerateRequest {
   length: SermonLength;
   complexity: SermonComplexity;
   tone: SermonTone;
+  /** المناسبة التي تُناسبها الخطبة (اختياري) */
+  occasion?: SermonOccasion;
   isSeries: boolean;
   seriesPartsCount?: number;
   customInstructions?: string;

@@ -29,12 +29,17 @@ import {
   RotateCw,
   Edit3,
   Trash2,
-  Lock
+  Lock,
+  Heart,
+  WifiOff,
+  HardDriveDownload
 } from 'lucide-react';
 import { Sermon, SeriesPart } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { AdSlot } from './AdSlot';
 import { sermonCount, totalSermonCount } from '../utils/sermonStats';
+import { useSermonLibrary } from '../hooks/useSermonLibrary';
+import { shareSermon } from '../lib/share';
 
 
 interface HomePublicShowcaseProps {
@@ -46,6 +51,9 @@ interface HomePublicShowcaseProps {
   onEditSermon?: (sermon: Sermon) => void;
   onRegenerateSermon?: (sermon: Sermon) => void;
   onDeleteSermon?: (id: string) => void;
+  /** عرض الخطب المحفوظة على الجهاز بدلاً من مكتبة السحابة */
+  offlineOnly?: boolean;
+  onToggleOffline?: (value: boolean) => void;
 }
 
 // Defining categories metadata with icons, descriptions, and colors
@@ -130,8 +138,13 @@ export const HomePublicShowcase: React.FC<HomePublicShowcaseProps> = ({
   onEditSermon,
   onRegenerateSermon,
   onDeleteSermon,
+  offlineOnly = false,
+  onToggleOffline,
 }) => {
   const { isAdmin, user, openLoginModal } = useAuth();
+  const library = useSermonLibrary();
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [sharedId, setSharedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSectionFilter, setActiveSectionFilter] = useState<string>('الكل');
   const [sortBy, setSortBy] = useState<'downloads' | 'views' | 'newest' | 'duration'>('downloads');
@@ -150,6 +163,14 @@ export const HomePublicShowcase: React.FC<HomePublicShowcaseProps> = ({
     const el = sectionRefs.current[catId];
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handleShare = async (sermon: Sermon) => {
+    const result = await shareSermon(sermon);
+    if (result !== 'failed') {
+      setSharedId(sermon.id);
+      window.setTimeout(() => setSharedId(null), 2500);
     }
   };
 
@@ -210,6 +231,11 @@ export const HomePublicShowcase: React.FC<HomePublicShowcaseProps> = ({
         return s.category === def.id;
       });
 
+      // المفضلة (محفوظة محلياً على جهاز المستخدم)
+      if (favoritesOnly) {
+        items = items.filter((s) => library.favorites.includes(s.id));
+      }
+
       // Filter by search query
       if (query) {
         items = items.filter((s) => {
@@ -244,7 +270,7 @@ export const HomePublicShowcase: React.FC<HomePublicShowcaseProps> = ({
           .reduce((acc, s) => acc + sermonCount(s), 0),
       };
     });
-  }, [sermons, searchQuery, sortBy]);
+  }, [sermons, searchQuery, sortBy, favoritesOnly, library.favorites]);
 
   // Total Public Metrics (each series part counts as a separate sermon)
   const totalStats = useMemo(() => {
@@ -429,7 +455,36 @@ export const HomePublicShowcase: React.FC<HomePublicShowcaseProps> = ({
 
         {/* Section Filter and Sort by Controls */}
         <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end text-xs sm:text-sm">
-          
+
+          {/* المفضلة — اختصار سريع لخطبك المحفوظة */}
+          <button
+            type="button"
+            onClick={() => setFavoritesOnly((v) => !v)}
+            className={`px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all ${
+              favoritesOnly
+                ? 'bg-rose-600 text-white border-rose-600'
+                : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
+            }`}
+          >
+            <Heart className={`w-3.5 h-3.5 ${favoritesOnly ? 'fill-white' : ''}`} />
+            المفضلة ({library.favorites.length})
+          </button>
+
+          {onToggleOffline && (
+            <button
+              type="button"
+              onClick={() => onToggleOffline(!offlineOnly)}
+              className={`px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all ${
+                offlineOnly
+                  ? 'bg-emerald-700 text-white border-emerald-700'
+                  : 'bg-stone-100 text-stone-700 border-stone-300 hover:bg-stone-200'
+              }`}
+            >
+              <WifiOff className="w-3.5 h-3.5" />
+              {offlineOnly ? 'كل الخطب' : 'المحفوظة'}
+            </button>
+          )}
+
           {/* Active section indicator */}
           {activeSectionFilter !== 'الكل' && (
             <button
@@ -459,7 +514,59 @@ export const HomePublicShowcase: React.FC<HomePublicShowcaseProps> = ({
 
       </div>
 
+      {/* الخطب المحفوظة محلياً — متاحة بدون اتصال */}
+      {offlineOnly && (
+        <div className="space-y-5">
+          <div className="bg-white rounded-2xl border border-stone-200 p-5 shadow-sm">
+            <h2 className="font-cairo font-extrabold text-xl text-stone-900 flex items-center gap-2">
+              <HardDriveDownload className="w-5 h-5 text-emerald-700" />
+              خطبي المحفوظة على الجهاز
+            </h2>
+            <p className="text-xs text-stone-500 mt-1">
+              هذه نسخة كاملة من الخطب التي حفظتها لتقرأها في أي وقت حتى دون اتصال بالإنترنت.
+            </p>
+          </div>
+          {library.offlineSermons.length === 0 ? (
+            <div className="bg-white border border-dashed border-stone-300 rounded-2xl p-10 text-center text-sm text-stone-500">
+              لم تحفظ أي خطبة بعد. افتح خطبة ثم اضغط «حفظ دون اتصال».
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {library.offlineSermons.map((sermon) => (
+                <div key={sermon.id} className="relative">
+                  <SermonCard
+                    sermon={sermon}
+                    onRead={() => onReadSermon(sermon)}
+                    onDownload={(fmt, part) => onDownloadSermon(sermon, fmt, part)}
+                    onTeleprompter={() => onOpenTeleprompter(sermon)}
+                    onEdit={() => onEditSermon?.(sermon)}
+                    onRegenerate={() => onRegenerateSermon?.(sermon)}
+                    onDelete={() => onDeleteSermon?.(sermon.id)}
+                    isDropdownOpen={downloadDropdownOpen === sermon.id}
+                    setDropdownOpen={(open) => setDownloadDropdownOpen(open ? sermon.id : null)}
+                    isFavorite={library.isFavorite(sermon.id)}
+                    isOfflineSaved
+                    onToggleFavorite={() => library.toggleFavorite(sermon.id)}
+                    onShare={() => handleShare(sermon)}
+                    onToggleOffline={() => library.removeOfflineSermon(sermon.id)}
+                    shared={sharedId === sermon.id}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => library.removeOfflineSermon(sermon.id)}
+                    className="absolute top-2 left-2 z-10 bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold px-2 py-1 rounded-lg cursor-pointer"
+                  >
+                    حذف النسخة المحلية
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Main Sections Presentation (الخطب في أقسامها) */}
+      {!offlineOnly && (
       <div className="space-y-14">
         
         {visibleCategories.map((category, categoryIndex) => {
@@ -541,6 +648,16 @@ export const HomePublicShowcase: React.FC<HomePublicShowcaseProps> = ({
                       onDelete={() => onDeleteSermon?.(sermon.id)}
                       isDropdownOpen={downloadDropdownOpen === sermon.id}
                       setDropdownOpen={(open) => setDownloadDropdownOpen(open ? sermon.id : null)}
+                      isFavorite={library.isFavorite(sermon.id)}
+                      isOfflineSaved={library.isOfflineSaved(sermon.id)}
+                      onToggleFavorite={() => library.toggleFavorite(sermon.id)}
+                      onShare={() => handleShare(sermon)}
+                      onToggleOffline={() =>
+                        library.isOfflineSaved(sermon.id)
+                          ? library.removeOfflineSermon(sermon.id)
+                          : library.saveOfflineSermon(sermon)
+                      }
+                      shared={sharedId === sermon.id}
                     />
                   ))}
                 </div>
@@ -554,6 +671,7 @@ export const HomePublicShowcase: React.FC<HomePublicShowcaseProps> = ({
         <AdSlot variant="inContent" slotId="home-feed-ad" />
 
       </div>
+      )}
 
     </div>
   );
@@ -570,6 +688,12 @@ interface SermonCardProps {
   onDelete?: () => void;
   isDropdownOpen: boolean;
   setDropdownOpen: (open: boolean) => void;
+  isFavorite?: boolean;
+  isOfflineSaved?: boolean;
+  onToggleFavorite?: () => void;
+  onShare?: () => void;
+  onToggleOffline?: () => void;
+  shared?: boolean;
 }
 
 const SermonCard: React.FC<SermonCardProps> = ({
@@ -582,6 +706,12 @@ const SermonCard: React.FC<SermonCardProps> = ({
   onDelete,
   isDropdownOpen,
   setDropdownOpen,
+  isFavorite = false,
+  isOfflineSaved = false,
+  onToggleFavorite,
+  onShare,
+  onToggleOffline,
+  shared = false,
 }) => {
   const { isAdmin, user, openLoginModal } = useAuth();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -721,9 +851,54 @@ const SermonCard: React.FC<SermonCardProps> = ({
           </span>
         </div>
 
-        {/* Action Buttons: Read Full, Download Dropdown, Teleprompter */}
+        {/* Action Buttons: Favorite, Share, Offline, Read, Download, Teleprompter */}
         <div className="flex items-center gap-1.5">
-          
+
+          {onToggleFavorite && (
+            <button
+              type="button"
+              onClick={onToggleFavorite}
+              className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
+                isFavorite
+                  ? 'bg-rose-50 border-rose-300 text-rose-600'
+                  : 'bg-white border-stone-300 text-stone-500 hover:text-rose-600 hover:border-rose-300'
+              }`}
+              title={isFavorite ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة'}
+            >
+              <Heart className={`w-4 h-4 ${isFavorite ? 'fill-rose-500 text-rose-500' : ''}`} />
+            </button>
+          )}
+
+          {onShare && (
+            <button
+              type="button"
+              onClick={onShare}
+              className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
+                shared
+                  ? 'bg-emerald-600 border-emerald-600 text-white'
+                  : 'bg-white border-stone-300 text-stone-600 hover:text-emerald-700 hover:border-emerald-400'
+              }`}
+              title={shared ? 'تم النسخ/المشاركة' : 'مشاركة الخطبة'}
+            >
+              {shared ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+            </button>
+          )}
+
+          {onToggleOffline && (
+            <button
+              type="button"
+              onClick={onToggleOffline}
+              className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
+                isOfflineSaved
+                  ? 'bg-emerald-50 border-emerald-400 text-emerald-700'
+                  : 'bg-white border-stone-300 text-stone-500 hover:text-emerald-700 hover:border-emerald-400'
+              }`}
+              title={isOfflineSaved ? 'حذف النسخة المحلية' : 'حفظ للقراءة دون اتصال'}
+            >
+              <WifiOff className="w-4 h-4" />
+            </button>
+          )}
+
           {/* Read button */}
           <button
             onClick={onRead}

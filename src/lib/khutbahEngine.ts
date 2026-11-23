@@ -43,6 +43,42 @@ export const TONE_MAP: Record<string, string> = {
   inspirational: 'حماسي شاحذ للهمم: يبعث في المصلين العزة والأمل، ويحفزهم على البذل والعمل الصالح والتفاؤل ونصرة الحق.',
 };
 
+/** مناسبات الخطبة — تضيف تنوّعاً في الخطاب والموضوعات دون تغيير الهيكل المنبري */
+export const OCCASION_MAP: Record<string, { label: string; guidance: string }> = {
+  normal: {
+    label: 'خطبة جمعة عامة',
+    guidance: 'خطبة جمعة جامعة في تزكية النفوس والتقوى تصلح لكل أوقات السنة.',
+  },
+  ramadan: {
+    label: 'شهر رمضان',
+    guidance: 'اربط الخطبة بفضائل الصيام وقيام رمضان والقرآن، وبالترغيب في الإكثار من الصدقة والاعتكاف، مع ذكر أحكام الصيام وآدابه.',
+  },
+  hajj: {
+    label: 'موسم الحج',
+    guidance: 'اجعل الخطبة عن مناسك الحج ومقاصده، والواقف العظيمة (عرفة، المزدلفة، منى)، وما يرتبط بها من التوبة والوصل الرحيم، مع إرشاد من لم يحج.',
+  },
+  eid: {
+    label: 'العيدان',
+    guidance: 'اجعل الخطبة مناسبة للعيد: أفراحه وآدابه، والصلاة والزكاة والصلة، وربط الفرحة بالشكر والطاعة لا باللهو والغفلة.',
+  },
+  funeral: {
+    label: 'جنائز وتذكير بالموت',
+    guidance: 'اجعل الخطبة رقيقة مؤثرة في التذكير بالموت والدار الآخرة، وحسن الظن بالله، ووصية الميت، وحقوق الجنازة والصلاة عليها، بلا جزع ولا قنوط.',
+  },
+  wedding: {
+    label: 'الزواج وبناء الأسرة',
+    guidance: 'اجعل الخطبة عن السكن والمودة والرحمة في الزواج، وحقوق الزوجين، وتربية الأولاد، ومقاصد الأسرة المسلمة في ضوء الكتاب والسنة.',
+  },
+  exam: {
+    label: 'الامتحانات والتحصيل',
+    guidance: 'اجعل الخطبة في فضل العلم والتحصيل، وآداب طلبه، والتوكل مع الأخذ بالأسباب، والصبر على الامتحانات، وحرمة الغش والكسل.',
+  },
+  crisis: {
+    label: 'أزمات وابتلاءات',
+    guidance: 'اجعل الخطبة تسلية وثباتاً عند الشدائد: حكم الابتلاء، وحسن التوكل، والصبر والدعاء، والتعاون والتكافل، ونبذ اليأس والتفريط.',
+  },
+};
+
 export const DIALECT_MAP: Record<string, { label: string; desc: string; guidance: string }> = {
   msa: {
     label: 'فصحى عصرية (جميع الأقطار)',
@@ -129,6 +165,7 @@ export function buildRequestParts(request: GenerateRequest): { promptText: strin
     length = 'medium',
     complexity = 'eloquent',
     tone = 'exhortative',
+    occasion = 'normal',
     isSeries = false,
     seriesPartsCount = 3,
     customInstructions = '',
@@ -141,6 +178,7 @@ export function buildRequestParts(request: GenerateRequest): { promptText: strin
 - الطول وعدد الكلمات المستهدف: ${targetLength.desc} (تنبيه حاسم: احرص على استيفاء الطول وتوليد نص ثري ومفصل ومكتمل يقارب ${targetLength.words} كلمة بدقة دون إيجاز مخل؛ بحيث تكون الخطبة الأولى وافية العناصر والخطبة الثانية مستوفية للدروس والتوجيهات العملية).
 - مستوى البلاغة واللغة: ${COMPLEXITY_MAP[complexity] || COMPLEXITY_MAP['eloquent']}
 - نبرة وأسلوب الخطبة: ${TONE_MAP[tone] || TONE_MAP['exhortative']}
+- مناسبة الخطبة: ${(OCCASION_MAP[occasion] || OCCASION_MAP['normal']).label} — ${(OCCASION_MAP[occasion] || OCCASION_MAP['normal']).guidance}
 - اللهجة الإقليمية: ${targetDialect.label} — ${targetDialect.guidance}
 `;
 
@@ -306,6 +344,7 @@ export function finalizeSermon(generatedData: any, request: GenerateRequest): Se
     length = 'medium',
     complexity = 'eloquent',
     tone = 'exhortative',
+    occasion = 'normal',
     isSeries = false,
     seriesPartsCount = 3,
     mode = 'topic',
@@ -366,6 +405,7 @@ export function finalizeSermon(generatedData: any, request: GenerateRequest): Se
     length,
     complexity,
     tone,
+    occasion,
     isSeries: !!isSeries,
     totalSeriesParts: isSeries ? (generatedData.seriesParts?.length || seriesPartsCount) : undefined,
     currentSeriesPartIndex: isSeries ? 0 : undefined,
@@ -383,7 +423,13 @@ export function finalizeSermon(generatedData: any, request: GenerateRequest): Se
     wordCount: generatedData.wordCount || wordCount,
     createdAt: now,
     updatedAt: now,
-    tags: generatedData.tags || ['خطبة جمعة', topic || 'موعظة', dialect === 'msa' ? 'فصحى عصرية' : dialect],
+    tags:
+      generatedData.tags || [
+        'خطبة جمعة',
+        topic || 'موعظة',
+        dialect === 'msa' ? 'فصحى عصرية' : dialect,
+        ...(occasion && occasion !== 'normal' ? [(OCCASION_MAP[occasion] || OCCASION_MAP['normal']).label] : []),
+      ],
     notes: '',
   };
 }

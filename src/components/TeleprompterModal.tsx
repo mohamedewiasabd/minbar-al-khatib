@@ -11,9 +11,12 @@ import {
   Minimize2,
   Clock,
   ArrowDown,
-  Volume2
+  Volume2,
+  VolumeX,
+  Gauge
 } from 'lucide-react';
 import { Sermon, SeriesPart } from '../types';
+import { isSpeechSupported, speakText, stopSpeech } from '../lib/tts';
 
 interface TeleprompterModalProps {
   sermon: Sermon;
@@ -39,6 +42,8 @@ export const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
   const [autoScroll, setAutoScroll] = useState<boolean>(false);
   const [scrollSpeed, setScrollSpeed] = useState<number>(1);
+  const [speaking, setSpeaking] = useState<boolean>(false);
+  const [speechRate, setSpeechRate] = useState<number>(0.9);
 
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -54,6 +59,9 @@ export const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
     }
     return () => clearInterval(interval);
   }, [isTimerRunning]);
+
+  // إيقاف الصوت عند مغادرة وضع المنبر
+  useEffect(() => () => stopSpeech(), []);
 
   // Auto-scroll effect
   useEffect(() => {
@@ -74,6 +82,21 @@ export const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
     const mins = Math.floor(totalSecs / 60);
     const secs = totalSecs % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const toggleReadAloud = () => {
+    if (speaking) {
+      stopSpeech();
+      setSpeaking(false);
+      return;
+    }
+    const text = `${currentTitle}\n\n${intro}\n\n${firstKhutbah}\n\n${pauseAdvice}\n\n${secondKhutbah}\n\n${supplication}`;
+    const started = speakText(text, {
+      rate: speechRate,
+      onEnd: () => setSpeaking(false),
+      onError: () => setSpeaking(false),
+    });
+    setSpeaking(started);
   };
 
   return (
@@ -125,6 +148,40 @@ export const TeleprompterModal: React.FC<TeleprompterModalProps> = ({
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
         </div>
+
+        {/* القراءة بصوت عالٍ أثناء الإلقاء */}
+        {isSpeechSupported() && (
+          <div className="flex items-center gap-1.5 bg-stone-800/80 text-white px-2.5 py-1.5 rounded-xl border border-stone-700">
+            <button
+              type="button"
+              onClick={toggleReadAloud}
+              className={`p-1 rounded-lg transition-colors ${
+                speaking ? 'bg-amber-500 text-stone-950' : 'hover:bg-stone-700 text-emerald-300'
+              }`}
+              title={speaking ? 'إيقاف القراءة' : 'تشغيل القراءة بصوت عالٍ'}
+            >
+              {speaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            </button>
+            <Gauge className="w-3.5 h-3.5 text-stone-400" />
+            <input
+              type="range"
+              min="0.6"
+              max="1.3"
+              step="0.1"
+              value={speechRate}
+              onChange={(e) => {
+                const rate = Number(e.target.value);
+                setSpeechRate(rate);
+                if (speaking) {
+                  stopSpeech();
+                  setSpeaking(false);
+                }
+              }}
+              className="w-16 accent-emerald-400 cursor-pointer"
+              title="سرعة الصوت"
+            />
+          </div>
+        )}
 
         {/* Font Size & Auto Scroll & Theme Controls */}
         <div className="flex items-center gap-2">
